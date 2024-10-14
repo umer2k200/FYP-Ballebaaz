@@ -7,7 +7,32 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 1. Install dependencies
 
    ```bash
+   npx create-expo-app@latest
+   cd projectname
+   npx expo start
+   npm run reset-project
+
    npm install
+   npm i -g expo-cli
+   npm i react-native-vector-icons
+   npm install --save-dev @types/react-native-vector-icons
+   npm i react-native-picker-select
+   npm i @react-native-google-signin/google-signin
+   npm i expo-av
+   npm i react-native-app-intro-slider
+   npm i expo-image-picker
+   npm install @react-native-community/datetimepicker
+   npm install firebase
+   npm install firebase @react-native-firebase/app @react-native-firebase/firestore
+   npm install @react-native-firebase/storage
+   npm install @react-native-async-storage/async-storage
+   npm install @react-native-firebase/auth
+   npm install axios
+   npm install react-native-dotenv --save
+   npm install react-native-image-picker
+   npm install @react-navigation/material-top-tabs
+   npm install react-native-reanimated-carousel
+
    ```
 
 2. Start the app
