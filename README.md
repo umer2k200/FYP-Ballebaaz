@@ -14,6 +14,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    npm install
    npm i -g expo-cli
+   npm install -g firebase-tools
    npm i react-native-vector-icons
    npm install --save-dev @types/react-native-vector-icons
    npm i react-native-picker-select
