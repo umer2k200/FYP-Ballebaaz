@@ -27,7 +27,8 @@ interface TeamData{
 export default function PlayerRequestTeam() {
   const navigation = useNavigation();  // React Navigation hook for going back
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null); // State to hold the selected team
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const [modalVisible, setModalVisible] = useState(false); 
+  const [modalVisible2, setModalVisible2] = useState(false); 
   const [teams, setTeams] = useState<TeamData[]>([]); // State to hold the list of teams
   const [loading, setLoading] = useState(true); // Loading state
 
@@ -115,6 +116,10 @@ export default function PlayerRequestTeam() {
     console.log("Selected team:", team.team_id);
     setModalVisible(true);
   };
+  const requestToJoinTeam2 = () => {
+    setModalVisible(false);
+    setModalVisible2(true);
+  };
 
   const handleRequest = async () => {
     if (!selectedTeam) return; // Ensure there's a selected team
@@ -135,10 +140,20 @@ export default function PlayerRequestTeam() {
       const querySnapshot = await getDocs(q);
   
       if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userDocId = userDoc.id;
+        const userDocData = userDoc.data();
+        if(userDocData.status === 'pending'){
+          Alert.alert('Wait for the Team\'s response');
+        }
+        else if(userDocData.status === 'rejected'){
+          requestToJoinTeam2();
+          //Alert.alert('rejected, wanna again?')
+        }
         // If a document exists, show an alert saying "You have already requested"
-        Alert.alert("Request Exists", "You have already requested to join this team.", [
-          { text: "OK" }
-        ]);
+        // Alert.alert("Request Exists", "You have already requested to join this team.", [
+        //   { text: "OK" }
+        // ]);
         fetchTeams();
       } else {
         // If no document exists, create a new request
@@ -164,6 +179,45 @@ export default function PlayerRequestTeam() {
     } finally {
 
       setModalVisible(false); // Close the modal
+    }
+  };
+
+  const handleRequest2 = async () => {
+    if (!selectedTeam) return; // Ensure there's a selected team
+  
+    try {
+      setLoading(true); // Start loading
+      // Reference to the 'playerTeamRequests' collection in Firestore
+      const requestsCollectionRef = collection(db, "playerTeamRequests");
+  
+      // Query to check if a request from the current player to the selected team already exists
+      const q = query(
+        requestsCollectionRef,
+        where("player_id", "==", userData.player_id),
+        where("team_id", "==", selectedTeam.team_id)
+      );
+  
+      // Fetch the documents that match the query
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userDocId = userDoc.id;
+        const userref = doc(db, 'playerTeamRequests',userDocId);
+        await updateDoc(userref,{
+          status:'pending',
+        });
+        console.log('rejected request was sent again')
+        Alert.alert('Your request has been sent again!');
+        fetchTeams();
+      } 
+  
+    } catch (error) {
+      console.error("Error handling request:", error);
+      Alert.alert("Error", "An error occurred while sending your request.");
+    } finally {
+      setLoading(false);
+      setModalVisible2(false); // Close the modal
     }
   };
   
@@ -227,6 +281,33 @@ export default function PlayerRequestTeam() {
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                     <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+      {/* Modal for Request Confirmation  if rejected*/}
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible2}
+        onRequestClose={() => setModalVisible2(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            {selectedTeam && (
+              <>
+                
+                <Text style={styles.modalDetails}>Your request was rejected.</Text>
+                <Text style={styles.modalDetails}>Do you want to send the request again?</Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.confirmButton} onPress={handleRequest2}>
+                    <Text style={styles.buttonText}>Yes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible2(false)}>
+                    <Text style={styles.buttonText}>No</Text>
                   </TouchableOpacity>
                 </View>
               </>

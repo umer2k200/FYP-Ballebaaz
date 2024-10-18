@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -9,9 +8,14 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { db } from "@/firebaseConfig";
 
 export default function ProfileScreen() {
+  const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
     name: "",
     username: "",
@@ -37,30 +41,151 @@ export default function ProfileScreen() {
     age: 0,
     email: "",
     fiveWickets: 0,
+    requestAccepted: false,
   });
 
   const router = useRouter();
-  const navigation = useNavigation();
 
   useEffect(() => {
+    
     const fetchUserData = async () => {
+      setLoading(true);
       try {
+        
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setUserData(parsedUserData);
+
+          
+
+          //problem is here
+          if (parsedUserData.requestAccepted) {
+            console.log('player_id from useffect1 and reqstatus: ',parsedUserData.player_id, ' + ', parsedUserData.requestAccepted)
+            showRequestAcceptedMessage(parsedUserData.player_id);
+            
+          }
+          
+        }
+        else{
+          console.log("No user data found in AsyncStorage.");
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
-      }
+      }finally{
+      setLoading(false);}
     };
 
     fetchUserData();
   }, []);
 
+  const fetchUserData = async () => {
+    setLoading(true);
+    try {
+      
+      const storedUserData = await AsyncStorage.getItem("userData");
+      if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        console.log("Fetched User Data:", parsedUserData); // Debugging
+        setUserData(parsedUserData);
+
+        
+
+        // //problem is here
+        // if (parsedUserData.requestAccepted) {
+        //   console.log('player_id from useffect1 and reqstatus: ',parsedUserData.player_id, ' + ', parsedUserData.requestAccepted)
+        //   showRequestAcceptedMessage(parsedUserData.player_id);
+          
+        // }
+        
+      }
+      else{
+        console.log("No user data found in AsyncStorage.");
+      }
+    } catch (error) {
+      console.log("Error fetching user data:", error);
+    }finally{
+    setLoading(false);}
+  };
+
+  useEffect(() => {
+    // Log whenever userData updates to check if player_id is being set correctly
+    if (userData.player_id) {
+      console.log("Player ID updated from useffect2:", userData.player_id);
+    }
+  }, [userData.player_id]);
+
+  const showRequestAcceptedMessage = (player_id:string) => {
+    Alert.alert(
+      `Request Accepted: ${player_id}`,
+      "Go to view my team",
+      [
+        {
+          text: "Okay",
+          onPress: () => handleOkayPress(player_id), // Call the function when Okay is pressed
+        }
+      ]
+    );
+  };
+
+  const handleOkayPress = async (player_id : string) => {
+    // if (!userData.player_id) {
+    //   console.log("Player ID is not available yet from handleokay proccess");
+    //   return;
+    // }
+    if(player_id){
+      console.log("player_id from handleokay: ",player_id);
+    }
+    try {
+      const pCollectionRef = collection(db,"player");
+      const q1 = query(pCollectionRef, where("player_id","==",player_id));
+      const q1snapshot = await getDocs(q1);
+      if(!q1snapshot.empty){
+        const pDoc = q1snapshot.docs[0];
+        const pDocId = pDoc.id;
+        const pref = doc(db, "player",pDocId);
+        await updateDoc(pref, {
+          requestAccepted: false,
+        });
+
+        const updatedSnapshot = await getDocs(q1);
+        const updatedData = updatedSnapshot.docs[0].data();
+
+        const updatedUserData = {
+          ...userData, // Spread the existing userData
+          ...updatedData, // Spread the updated data from Firestore
+        };
+
+        console.log('updatedUserData from if: ', updatedUserData);
+        await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
+        fetchUserData();
+
+        // Update the local state
+        //setUserData(updatedUserData);
+
+        
+
+        
+
+        console.log('req accepted from if');
+      }
+      else{
+        console.log('no doc found from else');
+      }
+    } catch (error) {
+      console.log("Error updating requestAccepted flag:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+        </View>
+      ): (<>
+      
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Profile Picture */}
         <View style={styles.profilePicContainer}>
@@ -125,6 +250,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      
 
       {/* Upcoming Matches Button */}
       <TouchableOpacity
@@ -133,6 +259,8 @@ export default function ProfileScreen() {
       >
         <Text style={styles.matchesButtonText}>Upcoming Matches</Text>
       </TouchableOpacity>
+      </>
+    )}
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -207,6 +335,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingBottom: 20, // Add extra padding to avoid content being hidden behind the navbar
+  },
+
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   profilePicContainer: {
     borderRadius: 75,

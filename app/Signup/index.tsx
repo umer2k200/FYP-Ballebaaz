@@ -99,6 +99,23 @@ export default function Signup() {
         return;
       }
       const random_player_id = "P" + Math.floor(Math.random() * 1000);
+      const playerCollectionRef = collection(db, "player");
+      const player_idQuery = query(playerCollectionRef, where("player_id", "==", random_player_id));
+      try{
+        const player_idSnapshot = await getDocs(player_idQuery);
+        if(!player_idSnapshot.empty){
+          setAlertMessage("Signup again! Error generating player_id");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking player_id: ", error);
+        setAlertMessage("Error checking player_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const playerData = {
         name: fullName,
         username: username,
@@ -124,9 +141,27 @@ export default function Signup() {
         age: 0,
         email: "",
         fiveWickets: 0,
+        requestAccepted: false,
       };
+      const random_teamOwnerID = "TO" + Math.floor(Math.random() * 1000);
+      const teamOwner_idQuery = query(teamOwnerCollectionRef, where("teamOwner_id", "==", random_teamOwnerID));
+      try{
+        const teamOwner_idSnapshot = await getDocs(teamOwner_idQuery);
+        if(!teamOwner_idSnapshot.empty){
+          setAlertMessage("Signup again! Error generating teamOwner_id");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking teamOwner_id: ", error);
+        setAlertMessage("Error checking teamOwner_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const teamOwnerData = {
-        teamOwner_id: "TO" + Math.floor(Math.random() * 1000),
+        teamOwner_id: random_teamOwnerID,
         team_id: "",
         player_id: random_player_id,
         username: username,
@@ -179,14 +214,30 @@ export default function Signup() {
         setLoading(false);
         return;
       }
-
+      const random_player_id = "P" + Math.floor(Math.random() * 1000);
+      const player_idQuery = query(playerCollectionRef, where("player_id", "==", random_player_id));
+      try{
+        const player_idSnapshot = await getDocs(player_idQuery);
+        if(!player_idSnapshot.empty){
+          setAlertMessage("Signup again! Error generating player_id");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking player_id: ", error);
+        setAlertMessage("Error checking player_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const playerData = {
         name: fullName,
         username: username,
         phone_no: phone,
         role: "",
         password: password,
-        player_id: "P" + Math.floor(Math.random() * 1000), 
+        player_id: random_player_id, 
         strike_rate: 0,
         fitness_status: "",
         matches_played: 0,
@@ -205,6 +256,7 @@ export default function Signup() {
         age: 0,
         email: "",
         fiveWickets: 0,
+        requestAccepted:false,
       };
       try {
         // await addDoc(collection(db, "player"), playerData);
@@ -251,9 +303,26 @@ export default function Signup() {
         setLoading(false);
         return;
       }
+      const random_coachID = "C" + Math.floor(Math.random() * 1000);
+      const coachidQuery = query(coachCollectionRef, where("coach_id", "==", random_coachID));
+      try{
+        const coachidSnapshot = await getDocs(coachidQuery);
+        if(!coachidSnapshot.empty){
+          setAlertMessage("Signup again! Error generating Coach ID");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking player_id: ", error);
+        setAlertMessage("Error checking player_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const coachData = {
         assigned_players: [],
-        coach_id: "C" + Math.floor(Math.random() * 1000),
+        coach_id: random_coachID,
         coach_name: fullName,
         username: username,
         email: "",
@@ -307,8 +376,25 @@ export default function Signup() {
         setLoading(false);
         return;
       }
+      const random_umpireID = "U" + Math.floor(Math.random() * 1000);
+      const umpireidQuery = query(umpireCollectionRef, where("umpire_id", "==", random_umpireID));
+      try{
+        const umpireidSnapshot = await getDocs(umpireidQuery);
+        if(!umpireidSnapshot.empty){
+          setAlertMessage("Signup again! Error generating umpire ID");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking player_id: ", error);
+        setAlertMessage("Error checking player_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const umpireData = {
-        umpire_id: "U" + Math.floor(Math.random() * 1000),
+        umpire_id:random_umpireID ,
         umpire_name: fullName,
         username: username,
         email: "",
@@ -362,8 +448,25 @@ export default function Signup() {
         setLoading(false);
         return;
       }
+      const random_clubOwnerID = "CO" + Math.floor(Math.random() * 1000);
+      const clubOwneridQuery = query(clubOwnerCollectionRef, where("clubOwner_id", "==", random_clubOwnerID));
+      try{
+        const clubOwneridSnapshot = await getDocs(clubOwneridQuery);
+        if(!clubOwneridSnapshot.empty){
+          setAlertMessage("Signup again! Error generating clubOwner ID");
+          setAlertVisible(true);
+          setLoading(false);
+          return;
+        }
+      }catch (error) {
+        console.error("Error checking player_id: ", error);
+        setAlertMessage("Error checking player_id");
+        setAlertVisible(true);
+        setLoading(false);
+        return;
+      }
       const clubOwnerData = {
-        clubOwner_id: "CO" + Math.floor(Math.random() * 1000),
+        clubOwner_id: random_clubOwnerID,
         clubOwner_name: fullName,
         username: username,
         email: "",

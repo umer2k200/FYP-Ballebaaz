@@ -209,7 +209,10 @@ export default function CaptainRequestScreen() {
                 const querySnapshot3 = await getDocs(q3);
                 if (!querySnapshot3.empty){
                   const docRef3 = querySnapshot3.docs[0].ref;
-                  await updateDoc(docRef3, { team_id: teamOwnerTeamId });
+                  await updateDoc(docRef3, {
+                     team_id: teamOwnerTeamId,
+                     requestAccepted: true,
+                    });
                   console.log("Player's team_id updated");
                 }
                 else{

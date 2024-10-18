@@ -52,6 +52,7 @@ export default function PlayerSettingsScreen() {
     age: 0,
     email: "",
     fiveWickets: 0,
+    requestAccepted: false,
   });
 
   useEffect(() => {
@@ -274,12 +275,18 @@ export default function PlayerSettingsScreen() {
       </TouchableOpacity>
 
         {/* View Teams Button */}
-      <TouchableOpacity
+        {userData.team_id !==''? (<TouchableOpacity
+        style={styles.attributesButton}
+        onPress={() => router.push("/PlayerViewMyTeam")}
+      >
+        <Text style={styles.attributesButtonText}>My Team</Text>
+      </TouchableOpacity>) : (<TouchableOpacity
         style={styles.attributesButton}
         onPress={() => router.push("/PlayerReqTeam")}
       >
         <Text style={styles.attributesButtonText}>View Teams</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>)}
+      
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

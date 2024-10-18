@@ -44,6 +44,20 @@ export default function Login() {
       switch (role) {
         case "player":
           collectionName = "player";
+          //check if the user is not a teamOwner, if yes then prompt the user to login as team owner
+          const teamOwnerQuery = query(
+            collection(db, "teamOwner"),
+            where("username", "==", username),
+            where("password", "==", password)
+          );
+          const teamOwnerQuerySnapshot = await getDocs(teamOwnerQuery);
+          if (!teamOwnerQuerySnapshot.empty) {
+            setAlertMessage("You are a team owner, please login as team owner");
+            setAlertVisible(true);
+            setLoading(false);
+            return;
+          }
+
           break;
         case "coach":
           collectionName = "coach";
@@ -166,7 +180,7 @@ export default function Login() {
             { label: "Team Owner", value: "team_owner" },
           ]}
           style={pickerSelectStyles}
-          placeholder={{ label: "Select Role", value: null }}
+          placeholder={{ label: "Select Role", value: '' }}
         />
       </View>
 

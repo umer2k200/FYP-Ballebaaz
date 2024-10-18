@@ -26,6 +26,7 @@ const RootLayout = () => {
             <Stack.Screen name='PlayerUpcomingMatches/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerReqTeam/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerHireCoach/index' options={{headerShown:false}} />
+            <Stack.Screen name='PlayerViewMyTeam/index' options={{headerShown:false}} />
             {/* Team Owner */}
             <Stack.Screen name='TeamOwnerBookGround/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerBookGround-2/index' options={{headerShown:false}} />
