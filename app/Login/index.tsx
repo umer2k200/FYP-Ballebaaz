@@ -13,7 +13,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import RNPickerSelect from "react-native-picker-select";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { db } from '@/firebaseConfig';
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc,doc } from "firebase/firestore";
 import CustomAlert from "@/components/CustomAlert";
 
 export default function Login() {
@@ -29,6 +29,32 @@ export default function Login() {
   const [alertMessage, setAlertMessage] = useState("");
 
 
+  // const update = async () => {
+  //   const playerref = collection(db, "player");
+  //   const querySnapshot = await getDocs(playerref);
+  //   querySnapshot.forEach(async (playerDoc) => {
+  //     const playerId = playerDoc.id;
+  //     const playerRef = doc(db, "player", playerId);
+  //     await updateDoc(playerRef, {
+  //         runsScored : 0,
+  //         ballsFaced : 0,
+  //         battingAverage : 0,
+  //         battingStrikeRate : 0,
+  //         noOfTimesOut : 0,
+  //         centuries : 0,
+  //         halfCenturies : 0,
+  //         oversBowled : 0,
+  //         ballsBowled : 0,
+  //         runsConceded : 0,
+  //         wicketsTaken : 0,
+  //         bowlingAverage : 0,
+  //         economyRate : 0,
+  //         bowlingStrikeRate : 0,
+        
+  //     });
+  //   });
+  // }
+  
   const handleLogin = async () => {
     if (!username || !password || !role) {
       setAlertMessage("Please fill all fields");
@@ -95,6 +121,7 @@ export default function Login() {
         setAlertVisible(true);
         setTimeout(() => {
           if (role === "player") {
+            //update();
             router.push("/PlayerHomePage");
           } else if (role === "coach") {
             router.push("/CoachHomePage");

@@ -25,30 +25,41 @@ interface VideoItem {
 
 export default function DrillsScreen() {
   const [userData, setUserData] = useState({
-    name: "",
-    username: "",
-    phone_no: 0,
+    name: '',
+    username: '',
+    phone_no: '',
     role: "",
-    password: "",
-    player_id: "",
-    strike_rate: 0,
+    password: '',
+    player_id: '', 
     fitness_status: "",
     matches_played: 0,
     best_bowling: "",
-    economy: 0,
     highlights: [],
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    average: 0,
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
-    wickets_taken: 0,
     weight: 0,
     height: 0,
     age: 0,
     email: "",
     fiveWickets: 0,
+    requestAccepted: false,
+    runsScored : 0,
+    ballsFaced : 0,
+    battingAverage : 0,
+    battingStrikeRate : 0,
+    noOfTimesOut : 0,
+    centuries : 0,
+    halfCenturies : 0,
+    oversBowled : 0,
+    ballsBowled : 0,
+    runsConceded : 0,
+    wicketsTaken : 0,
+    bowlingAverage : 0,
+    economyRate : 0,
+    bowlingStrikeRate : 0,
   });
 
   useEffect(() => {
@@ -168,7 +179,7 @@ export default function DrillsScreen() {
           </View>
           
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround-2')}>
           <Image
             source={require('@/assets/images/stadium.png')}
             style={styles.navIcon}

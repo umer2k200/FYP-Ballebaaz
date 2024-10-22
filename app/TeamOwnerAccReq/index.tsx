@@ -27,28 +27,39 @@ import CustomAlert from "@/components/CustomAlert";
 interface Player {
   name: string;
   username: string;
-  phone_no: number;
-  role: string;
+  phone_no: string;
   password: string;
-  player_id: string;
-  strike_rate: number;
   fitness_status: string;
   matches_played: number;
-  best_bowling: string;
-  economy: number;
-  highlights: any[];
+  highlights: [];
   team_id: string;
-  preferred_hand: string;
-  bowling_hand: string;
-  average: number;
-  training_sessions: any[];
-  assigned_drills: string;
-  wickets_taken: number;
-  weight: number;
   height: number;
-  age: number;
   email: string;
   fiveWickets: number;
+  requestAccepted: boolean;
+  runsScored: number;
+  ballsFaced: number;
+  battingAverage: number;
+  battingStrikeRate: number;
+  noOfTimesOut: number;
+  centuries: number;
+  halfCenturies: number;
+  oversBowled: number;
+  ballsBowled: number;
+  runsConceded: number;
+  wicketsTaken: number;
+  bowlingAverage: number;
+  bowlingStrikeRate: number;
+  economyRate: number;
+  player_id: string;
+  age: number;
+  role: string;
+  preferred_hand: string;
+  training_sessions: string;
+  weight: number;
+  assigned_drills: string;
+  bowling_hand: string;
+  best_bowling: string;
 }
 
 export default function CaptainRequestScreen() {
@@ -68,30 +79,41 @@ export default function CaptainRequestScreen() {
     team_id: "",
   });
   const [playersData, setPlayerData] = useState<Player>({
-    name: "",
-    username: "",
-    phone_no: 0,
+    name: '',
+    username: '',
+    phone_no: '',
     role: "",
-    password: "",
-    player_id: "",
-    strike_rate: 0,
+    password: '',
+    player_id: '', 
     fitness_status: "",
     matches_played: 0,
     best_bowling: "",
-    economy: 0,
     highlights: [],
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    average: 0,
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
-    wickets_taken: 0,
     weight: 0,
     height: 0,
     age: 0,
     email: "",
     fiveWickets: 0,
+    requestAccepted: false,
+    runsScored : 0,
+    ballsFaced : 0,
+    battingAverage : 0,
+    battingStrikeRate : 0,
+    noOfTimesOut : 0,
+    centuries : 0,
+    halfCenturies : 0,
+    oversBowled : 0,
+    ballsBowled : 0,
+    runsConceded : 0,
+    wicketsTaken : 0,
+    bowlingAverage : 0,
+    economyRate : 0,
+    bowlingStrikeRate : 0,
   });
 
   useEffect(() => {
@@ -335,17 +357,22 @@ export default function CaptainRequestScreen() {
                       Matches: {selectedPlayer.matches_played}
                     </Text>
                     <Text style={styles.modalDetails}>
-                      Strike Rate: {selectedPlayer.strike_rate}
+                      Batting Strike Rate: {selectedPlayer.runsScored>-1 && selectedPlayer.ballsFaced>0 ? (selectedPlayer.runsScored/selectedPlayer.ballsFaced*100).toFixed(2) : "N/A"}
                     </Text>
                     <Text style={styles.modalDetails}>
-                      Wickets: {selectedPlayer.wickets_taken}
+                      Batting Average: {selectedPlayer.runsScored>-1 && selectedPlayer.noOfTimesOut>0 ? (selectedPlayer.runsScored/selectedPlayer.noOfTimesOut).toFixed(2) : "N/A"}
                     </Text>
                     <Text style={styles.modalDetails}>
-                      Bowling Economy: {selectedPlayer.economy}
+                      Bowling Strike Rate: {selectedPlayer.ballsBowled>-1 && selectedPlayer.wicketsTaken>0 ? (selectedPlayer.ballsBowled/selectedPlayer.wicketsTaken).toFixed(2) : "N/A"}
                     </Text>
                     <Text style={styles.modalDetails}>
-                      Batting Avg: {selectedPlayer.average}
+                      Bowling Average: {selectedPlayer.runsConceded>-1 && selectedPlayer.wicketsTaken>0 ? (selectedPlayer.runsConceded/selectedPlayer.wicketsTaken).toFixed(2) : "N/A"}
                     </Text>
+                    <Text style={styles.modalDetails}>
+                      Bowling Economy: {selectedPlayer.runsConceded>-1 && selectedPlayer.oversBowled>0? (selectedPlayer.runsConceded/selectedPlayer.oversBowled).toFixed(2): "N/A"}
+                    </Text>
+              
+      
                     <TouchableOpacity
                       style={styles.closeButton}
                       onPress={() => setModalVisible(false)}

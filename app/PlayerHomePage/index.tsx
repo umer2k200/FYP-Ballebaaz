@@ -17,31 +17,41 @@ import { db } from "@/firebaseConfig";
 export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
-    name: "",
-    username: "",
-    phone_no: 0,
+    name: '',
+    username: '',
+    phone_no: '',
     role: "",
-    password: "",
-    player_id: "",
-    strike_rate: 0,
+    password: '',
+    player_id: '', 
     fitness_status: "",
     matches_played: 0,
     best_bowling: "",
-    economy: 0,
     highlights: [],
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    average: 0,
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
-    wickets_taken: 0,
     weight: 0,
     height: 0,
     age: 0,
     email: "",
     fiveWickets: 0,
     requestAccepted: false,
+    runsScored : 0,
+    ballsFaced : 0,
+    battingAverage : 0,
+    battingStrikeRate : 0,
+    noOfTimesOut : 0,
+    centuries : 0,
+    halfCenturies : 0,
+    oversBowled : 0,
+    ballsBowled : 0,
+    runsConceded : 0,
+    wicketsTaken : 0,
+    bowlingAverage : 0,
+    economyRate : 0,
+    bowlingStrikeRate : 0,
   });
 
   const router = useRouter();
@@ -203,51 +213,349 @@ export default function ProfileScreen() {
         <Text style={styles.profileBio}>
           {userData.player_id} {userData.preferred_hand !== ""? "| " + userData.preferred_hand + " hand" : ""} {userData.role !== ""? "" + userData.role : ""}
         </Text>
+        {userData.team_id!==""? (<Text style={styles.profileBio}>
+          {"Team ID: " + userData.team_id}
+        </Text>):(<></>)}
+        
         {/* {<Text style={styles.profileBio}>Pakistan</Text>} */}
 
         {/* Career Stats Card */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Career Stats</Text>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Age</Text>
-            <Text style={styles.statValue}>{userData.age}</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Matches</Text>
-            <Text style={styles.statValue}>
-              {userData.matches_played }
-            </Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Wickets</Text>
-            <Text style={styles.statValue}>
-              {userData.wickets_taken }
-            </Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Economy</Text>
-            <Text style={styles.statValue}>{userData.economy }</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Average</Text>
-            <Text style={styles.statValue}>{userData.average }</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Best Bowling</Text>
-            <Text style={styles.statValue}>
-              {userData.best_bowling }
-            </Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Strike Rate</Text>
-            <Text style={styles.statValue}>
-              {userData.strike_rate }
-            </Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>5W</Text>
-            <Text style={styles.statValue}>{userData.fiveWickets }</Text>
-          </View>
+          {userData.role === ""? (<Text style={styles.statsTitle}>No Career Stats</Text>
+          ):userData.role === "Batsman"? (<>
+            <Text style={styles.statsTitle}>Career Stats</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Matches Played</Text>
+              <Text style={styles.statValue}>
+                {userData.matches_played }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Scored</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Faced</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsFaced }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Average</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.noOfTimesOut>0? (userData.runsScored/userData.noOfTimesOut).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.ballsFaced>0? ((userData.runsScored/userData.ballsFaced)*100).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>No of Times Out</Text>
+              <Text style={styles.statValue}>
+                {userData.noOfTimesOut }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.centuries }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Half Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.halfCenturies }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Fitness Status</Text>
+              <Text style={styles.statValue}>
+                {userData.fitness_status }
+              </Text>
+            </View>
+          </>):userData.role === "Bowler"? (<>
+            <Text style={styles.statsTitle}>Career Stats</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Matches Played</Text>
+              <Text style={styles.statValue}>
+                {userData.matches_played }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Overs Bowled</Text>
+              <Text style={styles.statValue}>
+                {userData.oversBowled }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Bowled</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsBowled }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Conceded</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Wickets Taken</Text>
+              <Text style={styles.statValue}>
+                {userData.wicketsTaken }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Best Bowling</Text>
+              <Text style={styles.statValue}>
+                {userData.best_bowling!==''? userData.best_bowling : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Bowling Average</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded>-1 && userData.wicketsTaken>0? (userData.runsConceded/userData.wicketsTaken).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Economy Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded> -1 && userData.oversBowled>0? (userData.runsConceded/userData.oversBowled).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Bowling Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsBowled>-1 && userData.wicketsTaken>0? (userData.ballsBowled/userData.wicketsTaken).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Five Wickets</Text>
+              <Text style={styles.statValue}>
+                {userData.fiveWickets }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Scored</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Faced</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsFaced }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Average</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.noOfTimesOut>0? (userData.runsScored/userData.noOfTimesOut).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.ballsFaced>0? ((userData.runsScored/userData.ballsFaced)*100).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>No of Times Out</Text>
+              <Text style={styles.statValue}>
+                {userData.noOfTimesOut }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.centuries }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Half Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.halfCenturies }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Fitness Status</Text>
+              <Text style={styles.statValue}>
+                {userData.fitness_status }
+              </Text>
+            </View>
+          </>):userData.role === "Allrounder"? (<>
+            <Text style={styles.statsTitle}>Career Stats</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Matches Played</Text>
+              <Text style={styles.statValue}>
+                {userData.matches_played }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Scored</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Faced</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsFaced }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Average</Text>
+              <Text style={styles.statValue}>
+                {(userData.runsScored>-1 && userData.noOfTimesOut>0)? (userData.runsScored/userData.noOfTimesOut).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.ballsFaced>0? ((userData.runsScored/userData.ballsFaced)*100).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>No of Times Out</Text>
+              <Text style={styles.statValue}>
+                {userData.noOfTimesOut }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.centuries }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Half Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.halfCenturies }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Overs Bowled</Text>
+              <Text style={styles.statValue}>
+                {userData.oversBowled }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Bowled</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsBowled }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Conceded</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Wickets Taken</Text>
+              <Text style={styles.statValue}>
+                {userData.wicketsTaken }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Best Bowling</Text>
+              <Text style={styles.statValue}>
+                {userData.best_bowling!==''? userData.best_bowling : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Bowling Average</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded>-1 && userData.wicketsTaken>0? (userData.runsConceded/userData.wicketsTaken).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Economy Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsConceded> -1 && userData.oversBowled>0? (userData.runsConceded/userData.oversBowled).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Bowling Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsBowled>-1 && userData.wicketsTaken>0? (userData.ballsBowled/userData.wicketsTaken).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Five Wickets</Text>
+              <Text style={styles.statValue}>
+                {userData.fiveWickets }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Fitness Status</Text>
+              <Text style={styles.statValue}>
+                {userData.fitness_status }
+              </Text>
+            </View>
+          </>):userData.role === "Wicket Keeper"? (<>
+            <Text style={styles.statsTitle}>Career Stats</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Matches Played</Text>
+              <Text style={styles.statValue}>
+                {userData.matches_played }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Runs Scored</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Balls Faced</Text>
+              <Text style={styles.statValue}>
+                {userData.ballsFaced }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Average</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.noOfTimesOut>0? (userData.runsScored/userData.noOfTimesOut).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Batting Strike Rate</Text>
+              <Text style={styles.statValue}>
+                {userData.runsScored>-1 && userData.ballsFaced>0? ((userData.runsScored/userData.ballsFaced)*100).toFixed(2) : "N/A" }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>No of Times Out</Text>
+              <Text style={styles.statValue}>
+                {userData.noOfTimesOut }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.centuries }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Half Centuries</Text>
+              <Text style={styles.statValue}>
+                {userData.halfCenturies }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Fitness Status</Text>
+              <Text style={styles.statValue}>
+                {userData.fitness_status }
+              </Text>
+            </View>
+          </>):(<></>)}
+          
         </View>
       </ScrollView>
       

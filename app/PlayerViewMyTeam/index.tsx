@@ -31,24 +31,35 @@ interface player {
   role: string;
   password: string;
   player_id: string;
-  strike_rate: number;
   fitness_status: string;
   matches_played: number;
   best_bowling: string;
-  economy: number;
   highlights: [];
   team_id: string;
   preferred_hand: string;
   bowling_hand: string;
-  average: number;
   training_sessions: string;
   assigned_drills: string;
-  wickets_taken: number;
   weight: number;
   height: number;
   age: number;
   email: string;
   fiveWickets: number;
+  requestAccepted: boolean,
+  runsScored: number,
+  ballsFaced: number,
+  battingAverage: number,
+  battingStrikeRate: number,
+  noOfTimesOut: number,
+  centuries: number,
+  halfCenturies: number,
+  oversBowled: number,
+  ballsBowled: number,
+  runsConceded: number,
+  wicketsTaken: number,
+  bowlingAverage: number,
+  economyRate: number,
+  bowlingStrikeRate: number,
 }
 
 export default function CoachAssignedPlayers() {
@@ -56,30 +67,41 @@ export default function CoachAssignedPlayers() {
   const [leaveModalVisible, setLeaveModalVisible] = useState(false);
   const [loading, setLoading] = useState(false); // Loader state
   const [userData, setUserData] = useState({
-    name: "",
-    username: "",
-    phone_no: 0,
+    name: '',
+    username: '',
+    phone_no: '',
     role: "",
-    password: "",
-    player_id: "",
-    strike_rate: 0,
+    password: '',
+    player_id: '', 
     fitness_status: "",
     matches_played: 0,
     best_bowling: "",
-    economy: 0,
     highlights: [],
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    average: 0,
-    training_sessions: "",
+    training_sessions: [],
     assigned_drills: "",
-    wickets_taken: 0,
     weight: 0,
     height: 0,
     age: 0,
     email: "",
     fiveWickets: 0,
+    requestAccepted: false,
+    runsScored : 0,
+    ballsFaced : 0,
+    battingAverage : 0,
+    battingStrikeRate : 0,
+    noOfTimesOut : 0,
+    centuries : 0,
+    halfCenturies : 0,
+    oversBowled : 0,
+    ballsBowled : 0,
+    runsConceded : 0,
+    wicketsTaken : 0,
+    bowlingAverage : 0,
+    economyRate : 0,
+    bowlingStrikeRate : 0,
   });
 
   useEffect(() => {
@@ -171,25 +193,36 @@ export default function CoachAssignedPlayers() {
           username: bookingData.username,
           role: bookingData.role,
           password: bookingData.password,
-          strike_rate: bookingData.strike_rate,
           fitness_status: bookingData.fitness_status,
           matches_played: bookingData.matches_played,
           best_bowling: bookingData.best_bowling,
-          economy: bookingData.economy,
           highlights: bookingData.highlights,
           team_id: bookingData.team_id,
           preferred_hand: bookingData.preferred_hand,
           bowling_hand: bookingData.bowling_hand,
-          average: bookingData.average,
           training_sessions: bookingData.training_sessions,
           assigned_drills: bookingData.assigned_drills,
-          wickets_taken: bookingData.wickets_taken,
           weight: bookingData.weight,
           height: bookingData.height,
           age: bookingData.age,
           email: bookingData.email,
           fiveWickets: bookingData.fiveWickets,
           phone_no: bookingData.phone_no,
+          requestAccepted: false,
+          runsScored : bookingData.runsScored,
+          ballsFaced : bookingData.ballsFaced,
+          battingAverage : bookingData.battingAverage,
+          battingStrikeRate : bookingData.battingStrikeRate,
+          noOfTimesOut : bookingData.noOfTimesOut,
+          centuries : bookingData.centuries,
+          halfCenturies : bookingData.halfCenturies,
+          oversBowled : bookingData.oversBowled,
+          ballsBowled : bookingData.ballsBowled,
+          runsConceded : bookingData.runsConceded,
+          wicketsTaken : bookingData.wicketsTaken,
+          bowlingAverage : bookingData.bowlingAverage,
+          economyRate : bookingData.economyRate,
+          bowlingStrikeRate : bookingData.bowlingStrikeRate,
         };
         bookingsData.push(booking);
       }
@@ -276,24 +309,35 @@ export default function CoachAssignedPlayers() {
             role: userData.role,
             password: userData.password,
             player_id: userData.player_id,
-            strike_rate: userData.strike_rate,
             fitness_status: userData.fitness_status,
             matches_played: userData.matches_played,
             best_bowling: userData.best_bowling,
-            economy: userData.economy,
             highlights: userData.highlights,
             team_id: "",
             preferred_hand: userData.preferred_hand,
             bowling_hand: userData.bowling_hand,
-            average: userData.average,
             training_sessions: userData.training_sessions,
             assigned_drills: userData.assigned_drills,
-            wickets_taken: userData.wickets_taken,
             weight: userData.weight,
             height: userData.height,
             age: userData.age,
             email: userData.email,
             fiveWickets: userData.fiveWickets,
+            requestAccepted: false,
+            runsScored : userData.runsScored,
+            ballsFaced : userData.ballsFaced,
+            battingAverage : userData.battingAverage,
+            battingStrikeRate : userData.battingStrikeRate,
+            noOfTimesOut : userData.noOfTimesOut,
+            centuries : userData.centuries,
+            halfCenturies : userData.halfCenturies,
+            oversBowled : userData.oversBowled,
+            ballsBowled : userData.ballsBowled,
+            runsConceded : userData.runsConceded,
+            wicketsTaken : userData.wicketsTaken,
+            bowlingAverage : userData.bowlingAverage,
+            economyRate : userData.economyRate,
+            bowlingStrikeRate : userData.bowlingStrikeRate,
           };
 
           await AsyncStorage.setItem(
@@ -419,17 +463,37 @@ export default function CoachAssignedPlayers() {
                   Role: {selectedPlayer.role}
                 </Text>
                 <Text style={styles.modalDetails}>
+                  Matches Played: {selectedPlayer.matches_played}
+                </Text>
+                <Text style={styles.modalDetails}>
                   Batting Hand: {selectedPlayer.preferred_hand}
                 </Text>
                 <Text style={styles.modalDetails}>
                   Bowling Hand: {selectedPlayer.bowling_hand}
                 </Text>
                 <Text style={styles.modalDetails}>
-                  Batting avg: {selectedPlayer.average}
+                  Runs Scored: {selectedPlayer.runsScored}
                 </Text>
                 <Text style={styles.modalDetails}>
-                  Bowling economy: {selectedPlayer.economy}
+                  Batting Average: {selectedPlayer.runsScored>-1 && selectedPlayer.noOfTimesOut>0 ? (selectedPlayer.runsScored/selectedPlayer.noOfTimesOut).toFixed(2) : 0}
                 </Text>
+                <Text style={styles.modalDetails}>
+                  Batting Strike Rate: {selectedPlayer.runsScored>-1 && selectedPlayer.ballsFaced>0 ? (selectedPlayer.runsScored/selectedPlayer.ballsFaced*100).toFixed(2) : 0}
+                </Text>
+                <Text style={styles.modalDetails}>
+                  Wickets Taken: {selectedPlayer.wicketsTaken}
+                </Text>
+                <Text style={styles.modalDetails}>
+                  Bowling Average: {selectedPlayer.runsConceded>-1 && selectedPlayer.wicketsTaken>0 ? (selectedPlayer.runsConceded/selectedPlayer.wicketsTaken).toFixed(2) : 0}
+                </Text>
+                <Text style={styles.modalDetails}>
+                  Economy Rate: {selectedPlayer.runsConceded>-1 && selectedPlayer.oversBowled>0 ? (selectedPlayer.runsConceded/(Math.floor(selectedPlayer.oversBowled) + (selectedPlayer.oversBowled%1)*0.6)).toFixed(2) : 0}
+                </Text>
+                <Text style={styles.modalDetails}>
+                  Bowling Strike Rate: {selectedPlayer.ballsBowled>0 && selectedPlayer.wicketsTaken>0 ? (selectedPlayer.ballsBowled/selectedPlayer.wicketsTaken).toFixed(2) : 0}
+                </Text>
+                
+                  
 
                 <TouchableOpacity
                   style={styles.closeButton}

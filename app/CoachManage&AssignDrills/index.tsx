@@ -13,13 +13,11 @@ interface Player {
   age: number;
   role: string;
   preferred_hand: string;
-  strike_rate: number;
   training_sessions: string;
   weight: number;
   assigned_drills: string;
-  profile_pic: string;
   bowling_hand: string;
-  economy: number;
+  economyRate: number;
   best_bowling: string;
 }
 

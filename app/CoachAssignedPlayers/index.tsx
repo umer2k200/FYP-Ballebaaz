@@ -8,17 +8,39 @@ import { useNavigation } from "@react-navigation/native";
 
 interface Player {
   name: string;
+  username: string;
+  phone_no: string;
+  password: string;
+  fitness_status: string;
+  matches_played: number;
+  highlights: [];
+  team_id: string;
+  height: number;
+  email: string;
+  fiveWickets: number;
+  requestAccepted: boolean;
+  runsScored: number;
+  ballsFaced: number;
+  battingAverage: number;
+  battingStrikeRate: number;
+  noOfTimesOut: number;
+  centuries: number;
+  halfCenturies: number;
+  oversBowled: number;
+  ballsBowled: number;
+  runsConceded: number;
+  wicketsTaken: number;
+  bowlingAverage: number;
+  bowlingStrikeRate: number;
+  economyRate: number;
   player_id: string;
   age: number;
   role: string;
   preferred_hand: string;
-  strike_rate: number;
   training_sessions: string;
   weight: number;
   assigned_drills: string;
-  profile_pic: string;
   bowling_hand: string;
-  economy: number;
   best_bowling: string;
 }
 
@@ -146,9 +168,7 @@ export default function CoachAssignedPlayers() {
                 <Text style={styles.modalDetails}>Age: {selectedPlayer.age}</Text>
                 <Text style={styles.modalDetails}>Role: {selectedPlayer.role}</Text>
                 <Text style={styles.modalDetails}>Preferred Hand: {selectedPlayer.preferred_hand}</Text>
-                <Text style={styles.modalDetails}>Strike Rate: {selectedPlayer.strike_rate}</Text>
                 <Text style={styles.modalDetails}>Bowling Hand: {selectedPlayer.bowling_hand}</Text>
-                <Text style={styles.modalDetails}>Economy: {selectedPlayer.economy}</Text>
                 <Text style={styles.modalDetails}>Best Bowling: {selectedPlayer.best_bowling}</Text>
                 <Text style={styles.modalDetails}>
                   Training Session: {selectedPlayer.training_sessions}

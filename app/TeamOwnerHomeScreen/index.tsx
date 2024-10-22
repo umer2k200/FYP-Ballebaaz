@@ -201,7 +201,7 @@ export default function TeamOwnerProfileScreen() {
             style={styles.navIcon}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround-2')}>
           <Image
             source={require('@/assets/images/stadium.png')}
             style={styles.navIcon}

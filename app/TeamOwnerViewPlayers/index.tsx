@@ -26,28 +26,39 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 interface player {
   name: string;
   username: string;
-  phone_no: number;
-  role: string;
+  phone_no: string;
   password: string;
-  player_id: string;
-  strike_rate: number;
   fitness_status: string;
   matches_played: number;
-  best_bowling: string;
-  economy: number;
   highlights: [];
   team_id: string;
-  preferred_hand: string;
-  bowling_hand: string;
-  average: number;
-  training_sessions: [];
-  assigned_drills: string;
-  wickets_taken: number;
-  weight: number;
   height: number;
-  age: number;
   email: string;
   fiveWickets: number;
+  requestAccepted: boolean;
+  runsScored: number;
+  ballsFaced: number;
+  battingAverage: number;
+  battingStrikeRate: number;
+  noOfTimesOut: number;
+  centuries: number;
+  halfCenturies: number;
+  oversBowled: number;
+  ballsBowled: number;
+  runsConceded: number;
+  wicketsTaken: number;
+  bowlingAverage: number;
+  bowlingStrikeRate: number;
+  economyRate: number;
+  player_id: string;
+  age: number;
+  role: string;
+  preferred_hand: string;
+  training_sessions: string;
+  weight: number;
+  assigned_drills: string;
+  bowling_hand: string;
+  best_bowling: string;
 }
 
 export default function CoachAssignedPlayers() {
@@ -92,29 +103,40 @@ export default function CoachAssignedPlayers() {
         const bookingData = bookingDoc.data();
         const booking: player = {
           player_id: bookingData.player_id,
-          name: bookingData.name,
+          name: bookingData.name ,
           username: bookingData.username,
           role: bookingData.role,
           password: bookingData.password,
-          strike_rate: bookingData.strike_rate,
           fitness_status: bookingData.fitness_status,
           matches_played: bookingData.matches_played,
           best_bowling: bookingData.best_bowling,
-          economy: bookingData.economy,
           highlights: bookingData.highlights,
           team_id: bookingData.team_id,
           preferred_hand: bookingData.preferred_hand,
           bowling_hand: bookingData.bowling_hand,
-          average: bookingData.average,
           training_sessions: bookingData.training_sessions,
           assigned_drills: bookingData.assigned_drills,
-          wickets_taken: bookingData.wickets_taken,
           weight: bookingData.weight,
           height: bookingData.height,
           age: bookingData.age,
           email: bookingData.email,
           fiveWickets: bookingData.fiveWickets,
           phone_no: bookingData.phone_no,
+          requestAccepted: false,
+          runsScored : bookingData.runsScored,
+          ballsFaced : bookingData.ballsFaced,
+          battingAverage : bookingData.battingAverage,
+          battingStrikeRate : bookingData.battingStrikeRate,
+          noOfTimesOut : bookingData.noOfTimesOut,
+          centuries : bookingData.centuries,
+          halfCenturies : bookingData.halfCenturies,
+          oversBowled : bookingData.oversBowled,
+          ballsBowled : bookingData.ballsBowled,
+          runsConceded : bookingData.runsConceded,
+          wicketsTaken : bookingData.wicketsTaken,
+          bowlingAverage : bookingData.bowlingAverage,
+          economyRate : bookingData.economyRate,
+          bowlingStrikeRate : bookingData.bowlingStrikeRate,
         };
         bookingsData.push(booking);
       }
@@ -219,8 +241,10 @@ export default function CoachAssignedPlayers() {
                 <Text style={styles.modalDetails}>Role: {selectedPlayer.role}</Text>
                 <Text style={styles.modalDetails}>Batting Hand: {selectedPlayer.preferred_hand}</Text>
                 <Text style={styles.modalDetails}>Bowling Hand: {selectedPlayer.bowling_hand}</Text>
-                <Text style={styles.modalDetails}>Batting avg: {selectedPlayer.average}</Text>
-                <Text style={styles.modalDetails}>Bowling economy: {selectedPlayer.economy}</Text>
+                <Text style={styles.modalDetails}>Batting avg: {selectedPlayer.runsScored>-1 && selectedPlayer.noOfTimesOut>0 ? (selectedPlayer.runsScored/selectedPlayer.noOfTimesOut).toFixed(2):'N/A'}</Text>
+                <Text style={styles.modalDetails}>Batting strikerate: {selectedPlayer.runsScored>-1 && selectedPlayer.ballsFaced>0?((selectedPlayer.runsScored/selectedPlayer.ballsFaced)*100).toFixed(2):'N/A'}</Text>
+                <Text style={styles.modalDetails}>Bowling economy: {selectedPlayer.runsConceded>-1 && selectedPlayer.oversBowled>0? (selectedPlayer.runsConceded/selectedPlayer.oversBowled).toFixed(2):'N/A'}</Text>
+                <Text style={styles.modalDetails}>Fitness Status: {selectedPlayer.fitness_status}</Text>
 
                 <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
                   <Text style={styles.closeButtonText}>Close</Text>

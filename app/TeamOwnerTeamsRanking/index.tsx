@@ -92,7 +92,7 @@ const TeamRanking = () => {
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerDrills')}>
           <Image source={require('@/assets/images/drills.png')} style={styles.navIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround-2')}>
           <Image source={require('@/assets/images/stadium.png')} style={styles.navIcon} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerHomeScreen')}>
