@@ -6,12 +6,14 @@ import { View,
   StyleSheet,
   TouchableOpacity,
   Image,
+  ScrollView,
   ActivityIndicator, } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Dimensions } from 'react-native'; // To use screen width for responsiveness
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDocs, query, where, collection } from "firebase/firestore";
-import { db } from "@/firebaseConfig";
+import { db,storage } from "@/firebaseConfig";
 import CustomAlert from "@/components/CustomAlert";
 
 export default function CoachSettings() {
@@ -23,7 +25,8 @@ export default function CoachSettings() {
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const screenWidth = Dimensions.get('window').width;
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
   const [userData, setUserData] = useState({
     assigned_players: [],
@@ -35,6 +38,7 @@ export default function CoachSettings() {
     phone_no: 0,
     team_id: "",
     username: "",
+    profile_pic: "",
   });
 
   useEffect(() => {
@@ -53,6 +57,45 @@ export default function CoachSettings() {
 
     fetchUserData();
   }, []);
+
+  const handleImagePicker = async () => {
+    // Request permission to access media library
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access the media library is required!");
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setSelectedImage(result.assets[0].uri); // Set selected image URI from the assets array
+    }
+  };
+
+  const uploadImageToFirebase = async (uri:string) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const coachId = userData.coach_id;
+      const storageRef = ref(storage, `profile_pictures/${coachId}`); // Create a storage reference with the player ID
+
+      const snapshot = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      return downloadURL; // Return the image download URL
+    } catch (error) {
+      
+      console.error("Error uploading image: ", error);
+      throw error;
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -104,6 +147,10 @@ export default function CoachSettings() {
   }
     try {
       setLoading(true);
+      let imageUrl = userData.profile_pic;
+      if (selectedImage) {
+        imageUrl = await uploadImageToFirebase(selectedImage);
+      }
       // Get the current user data from AsyncStorage
       const storedUserData = await AsyncStorage.getItem("userData");
       
@@ -134,6 +181,7 @@ export default function CoachSettings() {
             phone_no: phoneNumber || parsedUserData.phone_no,
             password: password || parsedUserData.password,
             email : email || parsedUserData.email,
+            profile_pic: imageUrl || parsedUserData.profile_pic,
           });
   
           // Update the local user data in AsyncStorage
@@ -143,6 +191,7 @@ export default function CoachSettings() {
             phone_no: phoneNumber || parsedUserData.phone_no,
             password: password || parsedUserData.password,
             email: email || parsedUserData,
+            profile_pic: imageUrl || parsedUserData.profile_pic,
           };
   
           await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
@@ -179,7 +228,19 @@ export default function CoachSettings() {
       </View>
       ): (
         <>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <Text style={styles.title}>Settings</Text>
+        {/* Image Picker */}
+      <TouchableOpacity onPress={handleImagePicker} style={styles.imagePicker}>
+              {selectedImage || userData.profile_pic ? (
+                <Image
+                  source={{ uri: selectedImage || userData.profile_pic }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <Text style={styles.imagePickerText}>Select Profile Picture</Text>
+              )}
+            </TouchableOpacity>
         {/* Username Input */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Username</Text>
@@ -241,7 +302,7 @@ export default function CoachSettings() {
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
 
-
+      </ScrollView>
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -343,6 +404,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
+  },
+  imagePicker: {
+    marginBottom: 30,
+    borderRadius: 100,
+    width: 250,
+    height: 250,
+    justifyContent: "center",
+    alignContent: "center",
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "#f2f2f2",
+  },
+  imagePickerText: {
+    color: "#999",
+  },
+  profileImage: {
+    width: 250,
+    height: 250,
+    borderRadius: 100,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
   },
   updateButton: {
     backgroundColor: '#005B41', // Teal color for the button

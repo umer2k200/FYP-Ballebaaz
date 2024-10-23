@@ -42,6 +42,7 @@ interface Player {
   assigned_drills: string;
   bowling_hand: string;
   best_bowling: string;
+  profile_pic: string;
 }
 
 export default function CoachAssignedPlayers() {
@@ -137,7 +138,7 @@ export default function CoachAssignedPlayers() {
           <TouchableOpacity key={index} style={styles.playerCard} onPress={() => handlePlayerPress(player)}>
             <View style={styles.playerInfoContainer}>
               <Image
-                source={require("@/assets/images/assignedplayer.png")}
+                source={player.profile_pic?{uri: player.profile_pic} : require('@/assets/images/assignedplayer.png')}
                 style={styles.playerImage}
               />
               <View style={styles.playerDetails}>

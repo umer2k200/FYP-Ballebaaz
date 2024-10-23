@@ -152,6 +152,7 @@ export default function Signup() {
         bowlingAverage : 0,
         economyRate : 0,
         bowlingStrikeRate : 0,
+        profile_pic: '',
       };
       const random_teamOwnerID = "TO" + Math.floor(Math.random() * 1000);
       const teamOwner_idQuery = query(teamOwnerCollectionRef, where("teamOwner_id", "==", random_teamOwnerID));
@@ -277,6 +278,7 @@ export default function Signup() {
         bowlingAverage : 0,
         economyRate : 0,
         bowlingStrikeRate : 0,
+        profile_pic: '',
       };
       try {
         // await addDoc(collection(db, "player"), playerData);
@@ -350,6 +352,7 @@ export default function Signup() {
         team_id: "",
         phone_no: phone,
         password: password,
+        profile_pic: '',
       };
       try {
         // await addDoc(collection(db, "player"), playerData);

@@ -52,6 +52,7 @@ export default function ProfileScreen() {
     bowlingAverage : 0,
     economyRate : 0,
     bowlingStrikeRate : 0,
+    profile_pic: '',
   });
 
   const router = useRouter();
@@ -200,8 +201,11 @@ export default function ProfileScreen() {
         {/* Profile Picture */}
         <View style={styles.profilePicContainer}>
           <Image
-            source={require("@/assets/images/profilepic.png")} // Replace with your profile pic URL
+            source={userData.profile_pic?{uri: userData.profile_pic} : require('@/assets/images/profilepic.png')} // Replace with your profile pic URL
             style={styles.profilePic}
+            onError={() => {
+              console.log("Profile Picture error");
+            }}
           />
         </View>
 

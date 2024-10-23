@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  Image,
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native"; // For navigation back
@@ -60,6 +61,7 @@ interface Player {
   assigned_drills: string;
   bowling_hand: string;
   best_bowling: string;
+  profile_pic:string;
 }
 
 export default function CaptainRequestScreen() {
@@ -114,6 +116,7 @@ export default function CaptainRequestScreen() {
     bowlingAverage : 0,
     economyRate : 0,
     bowlingStrikeRate : 0,
+    profile_pic: "",
   });
 
   useEffect(() => {
@@ -352,7 +355,12 @@ export default function CaptainRequestScreen() {
               <View style={styles.modalView}>
                 {selectedPlayer && (
                   <>
-                    <Text style={styles.modalTitle}>Player Stats:</Text>
+                  
+                    <Text style={styles.modalTitle}>Player Stats</Text>
+                    <Image
+                  source={selectedPlayer.profile_pic ? { uri: selectedPlayer.profile_pic } : require("@/assets/images/assignedplayer.png")}
+                  style={styles.playerImage2}
+                />
                     <Text style={styles.modalDetails}>
                       Matches: {selectedPlayer.matches_played}
                     </Text>
@@ -410,6 +418,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
+  },
+  playerImage2: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+    borderRadius:20,
   },
   requestContainer: {
     backgroundColor: "#1e1e1e",
@@ -473,7 +487,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    color: "#fff",
+    color: "lightgrey",
+    fontWeight  : "bold",
     marginBottom: 20,
   },
   modalDetails: {

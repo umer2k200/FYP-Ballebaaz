@@ -59,6 +59,7 @@ interface player {
   assigned_drills: string;
   bowling_hand: string;
   best_bowling: string;
+  profile_pic: string;
 }
 
 export default function CoachAssignedPlayers() {
@@ -137,6 +138,7 @@ export default function CoachAssignedPlayers() {
           bowlingAverage : bookingData.bowlingAverage,
           economyRate : bookingData.economyRate,
           bowlingStrikeRate : bookingData.bowlingStrikeRate,
+          profile_pic : bookingData.profile_pic,
         };
         bookingsData.push(booking);
       }
@@ -237,6 +239,10 @@ export default function CoachAssignedPlayers() {
           <View style={styles.modalView}>
             {selectedPlayer && (
               <>
+              <Image
+                  source={selectedPlayer.profile_pic ? { uri: selectedPlayer.profile_pic } : require("@/assets/images/assignedplayer.png")}
+                  style={styles.playerImage2}
+                />
                 <Text style={styles.modalTitle}>{selectedPlayer.name}</Text>
                 <Text style={styles.modalDetails}>Role: {selectedPlayer.role}</Text>
                 <Text style={styles.modalDetails}>Batting Hand: {selectedPlayer.preferred_hand}</Text>
@@ -272,6 +278,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop:50,
     marginBottom:50,
+  },
+  playerImage2: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+    borderRadius:20,
   },
   pageName: {
     fontSize: 28,

@@ -33,7 +33,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install react-native-image-picker
    npm install @react-navigation/material-top-tabs
    npm install react-native-reanimated-carousel
-
+   npm install react-native-image-picker
    ```
 
 2. Start the app

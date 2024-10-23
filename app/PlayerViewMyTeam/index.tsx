@@ -60,6 +60,7 @@ interface player {
   bowlingAverage: number,
   economyRate: number,
   bowlingStrikeRate: number,
+  profile_pic: string;
 }
 
 export default function CoachAssignedPlayers() {
@@ -102,6 +103,7 @@ export default function CoachAssignedPlayers() {
     bowlingAverage : 0,
     economyRate : 0,
     bowlingStrikeRate : 0,
+    profile_pic: '',
   });
 
   useEffect(() => {
@@ -223,6 +225,7 @@ export default function CoachAssignedPlayers() {
           bowlingAverage : bookingData.bowlingAverage,
           economyRate : bookingData.economyRate,
           bowlingStrikeRate : bookingData.bowlingStrikeRate,
+          profile_pic: bookingData.profile_pic,
         };
         bookingsData.push(booking);
       }
@@ -338,6 +341,7 @@ export default function CoachAssignedPlayers() {
             bowlingAverage : userData.bowlingAverage,
             economyRate : userData.economyRate,
             bowlingStrikeRate : userData.bowlingStrikeRate,
+            profile_pic: userData.profile_pic,
           };
 
           await AsyncStorage.setItem(
@@ -454,10 +458,17 @@ export default function CoachAssignedPlayers() {
         visible={modalVisible}
         onRequestClose={closeModal}
       >
+        
         <View style={styles.modalContainer}>
+
           <View style={styles.modalView}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
             {selectedPlayer && (
               <>
+              <Image
+                  source={selectedPlayer.profile_pic ? { uri: selectedPlayer.profile_pic } : require("@/assets/images/assignedplayer.png")}
+                  style={styles.playerImage2}
+                />
                 <Text style={styles.modalTitle}>{selectedPlayer.name}</Text>
                 <Text style={styles.modalDetails}>
                   Role: {selectedPlayer.role}
@@ -503,6 +514,7 @@ export default function CoachAssignedPlayers() {
                 </TouchableOpacity>
               </>
             )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -651,7 +663,14 @@ const styles = StyleSheet.create({
   playerImage: {
     width: 80,
     height: 80,
-    marginRight: 10, // Add space between the image and the text
+    marginRight: 20, // Add space between the image and the text
+    borderRadius:20,
+  },
+  playerImage2: {
+    width: 250,
+    height: 250,
+    marginBottom: 20,
+    borderRadius:20,
   },
   playerDetails: {
     flex: 1, // Take up the remaining space

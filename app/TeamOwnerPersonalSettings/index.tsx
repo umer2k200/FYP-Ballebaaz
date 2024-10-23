@@ -5,14 +5,17 @@ import {
   TextInput,
   ActivityIndicator,
   StyleSheet,
+  Image,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDocs, query, where, collection } from "firebase/firestore";
-import { db } from "@/firebaseConfig";
+import { db,storage } from "@/firebaseConfig";
 import CustomAlert from "@/components/CustomAlert";
-import { ScrollView } from "react-native-gesture-handler";
 
 export default function PlayerSettingsScreen() {
   const [username, setUsername] = useState("");
@@ -23,6 +26,7 @@ export default function PlayerSettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const [userData, setUserData] = useState({
     username: "",
@@ -30,6 +34,45 @@ export default function PlayerSettingsScreen() {
     password: "",
     player_id: "",
     team_id:"",
+  });
+
+  const [playerData, setPlayerData] = useState({
+    name: '',
+    username: '',
+    phone_no: '',
+    role: "",
+    password: '',
+    player_id: '', 
+    fitness_status: "",
+    matches_played: 0,
+    best_bowling: "",
+    highlights: [],
+    team_id: "",
+    preferred_hand: "",
+    bowling_hand: "",
+    training_sessions: [],
+    assigned_drills: "",
+    weight: 0,
+    height: 0,
+    age: 0,
+    email: "",
+    fiveWickets: 0,
+    requestAccepted: false,
+    runsScored : 0,
+    ballsFaced : 0,
+    battingAverage : 0,
+    battingStrikeRate : 0,
+    noOfTimesOut : 0,
+    centuries : 0,
+    halfCenturies : 0,
+    oversBowled : 0,
+    ballsBowled : 0,
+    runsConceded : 0,
+    wicketsTaken : 0,
+    bowlingAverage : 0,
+    economyRate : 0,
+    bowlingStrikeRate : 0,
+    profile_pic: '',
   });
 
   useEffect(() => {
@@ -40,6 +83,7 @@ export default function PlayerSettingsScreen() {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setUserData(parsedUserData);
+          fetchPlayerData();
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
@@ -48,6 +92,77 @@ export default function PlayerSettingsScreen() {
 
     fetchUserData();
   }, []);
+
+  const fetchPlayerData = async () => {
+    try{
+      setLoading(true);
+      const storedUserData = await AsyncStorage.getItem("userData");
+      if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        const player_id = parsedUserData.player_id;
+        const playerCollectionRef = collection(db, "player");
+        const q = query(playerCollectionRef, where("player_id", "==", player_id));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const playerDoc = querySnapshot.docs[0];
+          const playerDocId = playerDoc.id;
+          const playerDocData = playerDoc.data();
+          console.log("Team Owner Player Data:", playerDoc.data());
+          setPlayerData(playerDocData as any);
+          
+        }
+        else{
+          console.log("Player document not found");
+        }
+      }else{
+        console.log("User data not found");
+      }
+    }catch(error){
+      console.log("Error fetching player data:", error);
+    }
+    finally{
+      setLoading(false);
+    }
+  };
+
+  const handleImagePicker = async () => {
+    // Request permission to access media library
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access the media library is required!");
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setSelectedImage(result.assets[0].uri); // Set selected image URI from the assets array
+    }
+  };
+
+  const uploadImageToFirebase = async (uri:string) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const teamOwnerId = userData.teamOwner_id;
+      const storageRef = ref(storage, `profile_pictures/${teamOwnerId}`); // Create a storage reference with the player ID
+
+      const snapshot = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      return downloadURL; // Return the image download URL
+    } catch (error) {
+      
+      console.error("Error uploading image: ", error);
+      throw error;
+    }
+  };
 
   const handleUpdatePersonal = async () => {
 
@@ -86,6 +201,11 @@ export default function PlayerSettingsScreen() {
 
     try {
       setLoading(true);
+
+      let imageUrl = playerData.profile_pic;
+      if (selectedImage) {
+        imageUrl = await uploadImageToFirebase(selectedImage);
+      }
       const storedUserData = await AsyncStorage.getItem("userData");
       
       if (storedUserData) {
@@ -120,11 +240,11 @@ export default function PlayerSettingsScreen() {
               phone_no: phoneNumber || playerDoc.data().phone_no,
               password: password || playerDoc.data().password,
               email: email || playerDoc.data().email,
+              profile_pic: imageUrl || playerDoc.data().profile_pic,
             });
 
             await updateDoc(teamDocRef, {
               username: username || playerDoc.data().username,
-      
               password: password || playerDoc.data().password,
             
             });
@@ -137,6 +257,15 @@ export default function PlayerSettingsScreen() {
               password: password || parsedUserData.password,
              
             };
+            //update player data in PlayerData
+            setPlayerData({
+              ...playerData,
+              username: username || playerData.username,
+              phone_no: phoneNumber || playerData.phone_no,
+              password: password || playerData.password,
+              email: email || playerData.email,
+              profile_pic: imageUrl || playerData.profile_pic,
+            });
 
             await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
             setLoading(false);
@@ -176,7 +305,21 @@ export default function PlayerSettingsScreen() {
         </View>
       ) : (
         <>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.title}>Settings</Text>
+
+          {/* Image Picker */}
+      <TouchableOpacity onPress={handleImagePicker} style={styles.imagePicker}>
+              {selectedImage || playerData.profile_pic ? (
+                <Image
+                  source={{ uri: selectedImage || playerData.profile_pic }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <Text style={styles.imagePickerText}>Select Profile Picture</Text>
+              )}
+            </TouchableOpacity>
+
 
           {/* Username Input */}
           <View style={styles.inputContainer}>
@@ -185,7 +328,7 @@ export default function PlayerSettingsScreen() {
               style={styles.input}
               value={username}
               onChangeText={setUsername}
-              placeholder={userData.username}
+              placeholder={playerData.username}
               placeholderTextColor="#999"
             />
           </View>
@@ -197,7 +340,7 @@ export default function PlayerSettingsScreen() {
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="a"
+              placeholder={playerData.email}
               placeholderTextColor="#999"
             />
           </View>
@@ -209,7 +352,7 @@ export default function PlayerSettingsScreen() {
               style={styles.input}
               value={phoneNumber}
               onChangeText={setPhoneNumber}
-              placeholder="asdsad"
+              placeholder={playerData.phone_no}
               keyboardType="phone-pad"
               placeholderTextColor="#999"
             />
@@ -222,7 +365,7 @@ export default function PlayerSettingsScreen() {
               style={styles.input}
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter your new password"
+              placeholder={playerData.password}
               secureTextEntry={true}
               placeholderTextColor="#999"
             />
@@ -232,6 +375,7 @@ export default function PlayerSettingsScreen() {
           <TouchableOpacity style={styles.updateButton} onPress={handleUpdatePersonal}>
             <Text style={styles.updateButtonText}>Update Profile</Text>
           </TouchableOpacity>
+          </ScrollView>
         </>
       )}
       <CustomAlert
@@ -252,7 +396,8 @@ const styles = StyleSheet.create({
       backgroundColor: "#121212", // Dark background color
       paddingHorizontal: 20,
       justifyContent: "center",
-      paddingBottom: 100,
+      paddingBottom: 50,
+      paddingTop: 50,
     },
     loaderContainer: {
       ...StyleSheet.absoluteFillObject,
@@ -282,6 +427,29 @@ const styles = StyleSheet.create({
       padding: 15,
       fontSize: 16,
       color: "#fff", // Light text color for dark mode
+    },
+    imagePicker: {
+      marginBottom: 30,
+      borderRadius: 100,
+      width: 250,
+      height: 250,
+      justifyContent: "center",
+      alignContent: "center",
+      alignSelf: "center",
+      alignItems: "center",
+      backgroundColor: "#f2f2f2",
+    },
+    imagePickerText: {
+      color: "#999",
+    },
+    profileImage: {
+      width: 250,
+      height: 250,
+      borderRadius: 100,
+    },
+    scrollViewContent: {
+      flexGrow: 1,
+      padding: 16,
     },
     updateButton: {
       backgroundColor: "#005B41", // Teal color for the button

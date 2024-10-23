@@ -32,6 +32,7 @@ interface Coach {
   phone_no: string;
   team_id: string;
   username: string;
+  profile_pic: string;
 }
 
 export default function HireCoach() {
@@ -103,6 +104,7 @@ export default function HireCoach() {
           phone_no: data.phone_no,
           team_id: data.team_id,
           username: data.username,
+          profile_pic: data.profile_pic,
         };
       });
 
