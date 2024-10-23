@@ -119,22 +119,35 @@ export default function CaptainRequestScreen() {
     profile_pic: "",
   });
 
+  const [teamExists, setTeamExists]= useState(false);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
           setUserData(parsedUserData);
           setUsername(parsedUserData.username);
           setTeamId(parsedUserData.team_id);
+          if(parsedUserData.team_id === ''){
+            console.log('no team found')
+            setTeamExists(false);
+          }
+          else{
+            console.log('team found')
+            setTeamExists(true);
+            await fetchPlayerTeamRequests();
+          }
+          setLoading(false);
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
       }
     };
     fetchUserData();
-    fetchPlayerTeamRequests();
+   // fetchPlayerTeamRequests();
   }, []);
 
   const fetchPlayerTeamRequests = async () => {
@@ -179,7 +192,7 @@ export default function CaptainRequestScreen() {
           }
           setRequestsData(requests); // Set requests data to state
         } else {
-          console.log("No team found with this team ID");
+          console.log("No team request found with this team ID");
         }
       } else {
         console.log("Team owner data not found in AsyncStorage");
@@ -334,7 +347,9 @@ export default function CaptainRequestScreen() {
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ) : (
+        
         <>
+        {teamExists? (
           <FlatList
             data={requestsData} // Replace this with requests data
             renderItem={renderRequestItem}
@@ -343,6 +358,9 @@ export default function CaptainRequestScreen() {
               <Text style={styles.emptyMessage}>No requests available.</Text>
             }
           />
+        ):(
+          <Text style={styles.emptyMessage}>No team found. Please create a team to view requests.</Text>
+        )}
 
           {/* Modal for displaying player stats */}
           <Modal

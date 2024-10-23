@@ -43,6 +43,7 @@ const RootLayout = () => {
             <Stack.Screen name='TeamOwnerAccReq/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerAttributes/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerPersonalSettings/index' options={{headerShown:false}} />
+            <Stack.Screen name='TeamOwnerAddTeam/index' options={{headerShown:false}} />
 
             {/* Coach */}
             <Stack.Screen name='CoachHomePage/index' options={{headerShown:false}} />

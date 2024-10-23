@@ -54,7 +54,7 @@ export default function ProfileScreen() {
     bowlingStrikeRate : 0,
     profile_pic: '',
   });
-
+  const [teamExists, setTeamExists] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -68,6 +68,9 @@ export default function ProfileScreen() {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setUserData(parsedUserData);
+          if(parsedUserData.team_id === "") {
+            setTeamExists(false);
+          }
 
           
 
@@ -219,7 +222,9 @@ export default function ProfileScreen() {
         </Text>
         {userData.team_id!==""? (<Text style={styles.profileBio}>
           {"Team ID: " + userData.team_id}
-        </Text>):(<></>)}
+        </Text>):(<Text style={styles.profileBio}>
+          {"No Team"}
+        </Text>)}
         
         {/* {<Text style={styles.profileBio}>Pakistan</Text>} */}
 
@@ -279,7 +284,7 @@ export default function ProfileScreen() {
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Fitness Status</Text>
               <Text style={styles.statValue}>
-                {userData.fitness_status }
+                {userData.fitness_status? userData.fitness_status : "N/A" }
               </Text>
             </View>
           </>):userData.role === "Bowler"? (<>
@@ -563,7 +568,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
       
-
+      {teamExists? (<>
       {/* Upcoming Matches Button */}
       <TouchableOpacity
         style={styles.matchesButton}
@@ -571,6 +576,7 @@ export default function ProfileScreen() {
       >
         <Text style={styles.matchesButtonText}>Upcoming Matches</Text>
       </TouchableOpacity>
+      </>):(<></>)}
       </>
     )}
 

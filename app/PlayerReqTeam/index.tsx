@@ -13,9 +13,9 @@ interface TeamData{
   coach_id: string;
   highest_score: string;
   highlights: string[];
-  matches_lost: string;
-  matches_played: string;
-  matches_won: string;
+  matches_lost: number;
+  matches_played: number;
+  matches_won: number;
   players: string[];
   ranking: string;
   team_id: string;

@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "expo-router";
-import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from '@/firebaseConfig';
-import Ionicons from '@expo/vector-icons/Ionicons'; // Import Ionicons for the notification icon
-
-
+import CustomAlert from '@/components/CustomAlert';
 import {
   View,
   Text,
@@ -14,7 +11,8 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native';
 
 interface TeamData {
@@ -35,8 +33,12 @@ interface TeamData {
 
 export default function TeamOwnerProfileScreen() {
   const router = useRouter();
-  const navigation = useNavigation();
-
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
   const [teamOwnerData,setTeamOwnerData] = useState({
     teamOwner_id: "",
     player_id: "",
@@ -50,7 +52,7 @@ export default function TeamOwnerProfileScreen() {
      captain_id:"",
     captain_name:"",
     coach_id:"",
-    highest_score: 0,
+    highest_score: '',
     highlights:"",
     matches_lost: 0,
     matches_played: 0,
@@ -60,7 +62,10 @@ export default function TeamOwnerProfileScreen() {
     team_id:"",
     team_name: "",
     wl_ratio: 0,
+    profile_pic: "",
   });
+
+  const [teamExists, setTeamExists] = useState(true);
 
   const [userData, setUserData] = useState({
     username: "",
@@ -74,12 +79,22 @@ export default function TeamOwnerProfileScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setTeamOwnerData(parsedUserData);
-          fetchTeamData();
+          //await fetchTeamData();
+          if (parsedUserData.team_id === '') {
+            setTeamExists(false);
+            console.log("Team does not exist");
+          }
+          else{
+            console.log("Team exists");
+            await fetchTeamData();
+          }
+          setLoading(false);
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
@@ -115,7 +130,7 @@ export default function TeamOwnerProfileScreen() {
               const teamData2 = teamDoc.data(); // Explicitly cast the data to TeamData type
       
               // Step 3: Use teamData for rendering or updating state
-              console.log("Fetched Team Data:", teamData);
+              console.log("Fetched Team Data:", teamData2);
               setTeamData(teamData2 as any); // Assuming you have setTeamData to update your state
       
             } else {
@@ -139,6 +154,12 @@ export default function TeamOwnerProfileScreen() {
 
   return (
     <View style={styles.container}>
+      {loading? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+      </View>
+      ): (
+        <>
       {/* Notification Icon */}
       <TouchableOpacity style={styles.notItem} onPress={() => router.push('/TeamOwnerAccReq')}>
           <Image
@@ -146,12 +167,13 @@ export default function TeamOwnerProfileScreen() {
             style={styles.navIcon}
           />
         </TouchableOpacity>
-
+      
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Profile Picture */}
+        {teamExists ? (<>
         <View style={styles.profilePicContainer}>
           <Image
-            source={require('@/assets/images/Islu.jpg')} // Replace with dynamic profile pic URL if needed
+            source={teamData.profile_pic? {uri: teamData.profile_pic}: require('@/assets/images/Islu.jpg')} // Replace with dynamic profile pic URL if needed
             style={styles.profilePic}
           />
         </View>
@@ -175,23 +197,34 @@ export default function TeamOwnerProfileScreen() {
           </View>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>W/L Ratio</Text>
-            <Text style={styles.statValue}>{teamData.wl_ratio}%</Text>
+            <Text style={styles.statValue}>{teamData.matches_won>-1 && teamData.matches_lost>0 ? (teamData.matches_won/teamData.matches_lost).toFixed(2).concat('%'): 'N/A'}</Text>
           </View>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Highest Score</Text>
-            <Text style={styles.statValue}>{teamData.highest_score}</Text>
+            <Text style={styles.statValue}>{teamData.highest_score? teamData.highest_score: 0}</Text>
           </View>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Captain</Text>
             <Text style={styles.statValue}>{teamData.captain_name}</Text>
           </View>
         </View>
-      </ScrollView>
-
-      {/* Upcoming Matches Button */}
+        {/* Upcoming Matches Button */}
       <TouchableOpacity style={styles.matchesButton} onPress={() => router.push('/TeamOwnerUpcomingMatches')}>
         <Text style={styles.matchesButtonText}>Upcoming Matches</Text>
       </TouchableOpacity>
+        </>):(
+          <TouchableOpacity
+          style={styles.addGroundButton}
+          onPress={() => router.push("/TeamOwnerAddTeam")} // Navigate to add ground screen
+        >
+          <Text style={styles.addGroundText}>Register Team</Text>
+        </TouchableOpacity>
+        )}
+      </ScrollView>
+
+      
+      </>
+      )}
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -287,12 +320,32 @@ const styles = StyleSheet.create({
         backgroundColor: '#121212', // Dark background color
         paddingHorizontal: 20,
         justifyContent: 'center',
-        paddingBottom: 100,
+        paddingBottom: 50,
       },
       scrollContainer: {
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingBottom: 100, // Add extra padding to avoid content being hidden behind the navbar
+      },
+      addGroundButton: {
+        backgroundColor: "#005B41", // Teal color
+        padding:15,
+        borderRadius: 10,
+        marginTop: 20,
+        width: "60%",
+        alignSelf: "center",
+        alignItems: "center",
+      },
+      addGroundText: {
+        color: "#fff",
+        fontSize: 16,
+      },
+      loaderContainer: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex:1000,
       },
       profilePicContainer: {
         borderRadius: 75,
@@ -305,7 +358,7 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5, // Adds shadow for Android
         marginBottom: 20,
-        marginTop: 100
+        marginTop: 25,
       },
       profilePic: {
         width: 150,

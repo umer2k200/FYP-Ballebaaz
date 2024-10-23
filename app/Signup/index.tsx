@@ -43,6 +43,12 @@ export default function Signup() {
       return;
     }
 
+    if( username === password || username === confirmPassword){
+      setAlertMessage("Username and password cannot be the same");
+      setAlertVisible(true);
+      return;
+    }
+
     if (!usernameRegex.test(username)) {
       setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
       setAlertVisible(true);

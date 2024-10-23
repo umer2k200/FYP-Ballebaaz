@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
