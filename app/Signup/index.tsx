@@ -34,7 +34,8 @@ export default function Signup() {
   const handleSignup = async () => {
     const phoneRegex = /^03[0-9]{9}$/;
     const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
-    const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
 
     if (!fullName || !username || !phone || !role || !password || !confirmPassword) {
       setAlertMessage("Please fill all fields");

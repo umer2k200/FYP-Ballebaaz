@@ -55,6 +55,7 @@ export default function ClubOwnerHomeScreen() {
     availibility: "",
     capacity: 0,
     revenue: 0,
+    pic:'',
   });
 
   const [groundExists, setGroundExists] = useState(false);
@@ -105,6 +106,7 @@ export default function ClubOwnerHomeScreen() {
             availibility: groundData.availibility,
             capacity: groundData.capacity,
             revenue: groundData.revenue,
+            pic:groundData.pic,
           });
           setGroundExists(true);
         });
@@ -143,7 +145,7 @@ export default function ClubOwnerHomeScreen() {
             <Text style={styles.sectionTitle}>Ground Details</Text>
             <View style={styles.card}>
               <Image
-                source={require("@/assets/images/gwadarcricketground.jpg")}
+                source={groundDetails.pic?{uri:groundDetails.pic}:require('@/assets/images/gwadarcricketground.jpg')} // Default ground image
                 style={styles.groundImage}
               />
               <Text style={styles.cardText}>

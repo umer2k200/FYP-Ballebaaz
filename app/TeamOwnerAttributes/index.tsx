@@ -194,7 +194,7 @@ export default function PlayerAttributesScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Role</Text>
         <View style={styles.buttonContainer}>
-          {['Batsman', 'Bowler', 'Batting Allrounder', 'Bowling Allrounder', 'Wicket Keeper Batter'].map((item) => (
+          {['Batsman', 'Bowler', 'Allrounder', 'Wicket Keeper'].map((item) => (
             <TouchableOpacity
               key={item}
               style={[styles.button, role === item && styles.selectedButton]}

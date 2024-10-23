@@ -1,16 +1,19 @@
 import React, { useState,useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity,  ActivityIndicator } from "react-native";
-import { db } from "@/firebaseConfig";
+import { View, Text, TextInput,ScrollView, StyleSheet,Image, TouchableOpacity,  ActivityIndicator } from "react-native";
+import { db,storage } from "@/firebaseConfig";
 import { doc, updateDoc, getDocs, query, where, collection, addDoc } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import CustomAlert from "@/components/CustomAlert";
-
+import { useRouter } from "expo-router";
 export default function AddGroundScreen() {
   // State for ground details
   const [groundName, setGroundName] = useState("");
   const [location, setLocation] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
   const [capacity, setCapacity] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -27,6 +30,7 @@ export default function AddGroundScreen() {
     password: "",
   });
 
+  const router = useRouter();
   const groundData = {
     ground_id: "G" + Math.floor(Math.random() * 1000),
     name: groundName,
@@ -34,6 +38,7 @@ export default function AddGroundScreen() {
     revenue: hourlyRate,
     capacity: capacity,
     availibility: true,
+    pic:selectedImage,
   };
 
   useEffect(() => {
@@ -51,6 +56,45 @@ export default function AddGroundScreen() {
     };
     fetchUserData();
   }, []);
+
+  const handleImagePicker = async () => {
+    // Request permission to access media library
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access the media library is required!");
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setSelectedImage(result.assets[0].uri); // Set selected image URI from the assets array
+    }
+  };
+
+  const uploadImageToFirebase = async (uri:string) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const playerId = groundData.ground_id;
+      const storageRef = ref(storage, `profile_pictures/${playerId}`); // Create a storage reference with the player ID
+
+      const snapshot = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      return downloadURL; // Return the image download URL
+    } catch (error) {
+      
+      console.error("Error uploading image: ", error);
+      throw error;
+    }
+  };
 
   const handleUpdate = async () => {
     //setLoading(true);
@@ -117,8 +161,14 @@ export default function AddGroundScreen() {
   
   const handleAddGround = async () => {
     
-    if (groundName && location && capacity && hourlyRate) {
+    if (groundName && location && capacity && hourlyRate && selectedImage) {
       try {
+        setLoading(true);
+
+        let imageUrl = groundData.pic;
+      if (selectedImage) {
+        imageUrl = await uploadImageToFirebase(selectedImage);
+      }
         const docRef = await addDoc(collection(db, "ground"), groundData);
         console.log("Document written with ID: ", docRef.id); 
         handleUpdate();
@@ -130,7 +180,8 @@ export default function AddGroundScreen() {
         setAlertMessage("Failed to add ground");
       setAlertVisible(true);
       }finally {
-        // setLoading(false);
+         setLoading(false);
+         router.push("/ClubOwnerHome");
       }
 
       // Clear the fields after adding
@@ -157,8 +208,19 @@ export default function AddGroundScreen() {
       </View>
       ): (
         <>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Add New Ground</Text>
-
+        {/* Image Picker */}
+      <TouchableOpacity onPress={handleImagePicker} style={styles.imagePicker}>
+              {selectedImage || groundData.pic ? (
+                <Image
+                  source={selectedImage? { uri: selectedImage } :  groundData.pic ? { uri: groundData.pic } : require("@/assets/images/assignedplayer.png")}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <Text style={styles.imagePickerText}>Select Profile Picture</Text>
+              )}
+            </TouchableOpacity>
       {/* Ground Name Input */}
       <TextInput
         style={styles.input}
@@ -199,7 +261,9 @@ export default function AddGroundScreen() {
       <TouchableOpacity style={styles.addButton} onPress={handleAddGround}>
         <Text style={styles.buttonText}>Add Ground</Text>
       </TouchableOpacity>
+      </ScrollView>
       </>
+      
       )}
       <CustomAlert 
         visible={alertVisible} 
@@ -271,5 +335,28 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  imagePicker: {
+    marginBottom: 30,
+    borderRadius: 100,
+    width: 250,
+    height: 250,
+    justifyContent: "center",
+    alignContent: "center",
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "#f2f2f2",
+  },
+  imagePickerText: {
+    color: "#999",
+  },
+  profileImage: {
+    width: 250,
+    height: 250,
+    borderRadius: 100,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
   },
 });
