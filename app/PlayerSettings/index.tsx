@@ -14,7 +14,6 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
 import { doc, updateDoc, getDocs, query, where, collection ,} from "firebase/firestore";
 import { db ,storage} from "@/firebaseConfig";
 import CustomAlert from "@/components/CustomAlert";
@@ -31,6 +30,7 @@ export default function PlayerSettingsScreen() {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [TeamExists, setTeamExists]= useState(false);
 
   
   const [userData, setUserData] = useState({
@@ -47,7 +47,7 @@ export default function PlayerSettingsScreen() {
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
     weight: 0,
     height: 0,
@@ -80,6 +80,9 @@ export default function PlayerSettingsScreen() {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setUserData(parsedUserData);
+          if(parsedUserData.team_id !==''){
+            setTeamExists(true);
+          }
         }
       } catch (error) {
         console.log("Error fetching user data:", error);

@@ -18,9 +18,12 @@ import {
   where,
   query,
   updateDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomAlert from "@/components/CustomAlert";
+//coach hired, update coach id in team's coach id, add team id in coach assignedTeams array
+//when coach changed,update coach id in teams's coach id, remove team id from the assignedTeams array of the previous coach, add team id in the assignedTeams array of the new coach
 
 interface Coach {
   coach_id: string;
@@ -33,6 +36,7 @@ interface Coach {
   team_id: string | null;
   username: string;
   profile_pic: string;
+  assigned_teams: string[];
 }
 
 export default function HireCoach() {
@@ -49,44 +53,7 @@ export default function HireCoach() {
     setAlertVisible(false);
   };
 
-  const [userData, setUserData] = useState({
-    name: '',
-    username: '',
-    phone_no: '',
-    role: "",
-    password: '',
-    player_id: '', 
-    fitness_status: "",
-    matches_played: 0,
-    best_bowling: "",
-    highlights: [],
-    team_id: "",
-    preferred_hand: "",
-    bowling_hand: "",
-    training_sessions: [],
-    assigned_drills: "",
-    weight: 0,
-    height: 0,
-    age: 0,
-    email: "",
-    fiveWickets: 0,
-    requestAccepted: false,
-    runsScored : 0,
-    ballsFaced : 0,
-    battingAverage : 0,
-    battingStrikeRate : 0,
-    noOfTimesOut : 0,
-    centuries : 0,
-    halfCenturies : 0,
-    oversBowled : 0,
-    ballsBowled : 0,
-    runsConceded : 0,
-    wicketsTaken : 0,
-    bowlingAverage : 0,
-    economyRate : 0,
-    bowlingStrikeRate : 0,
-  });
-
+  
   const [teamOwnerData,setTeamOwnerData] = useState({
     teamOwner_id: "",
     player_id: "",
@@ -97,18 +64,18 @@ export default function HireCoach() {
 
   const[teamData,setTeamData]=useState({
     captain_id: '',
-  captain_name: '',
-  coach_id: '',
-  highest_score: 0,
-  highlights: '',
-  matches_lost: 0,
-  matches_played: 0,
-  matches_won: 0,
-  players: [],
-  ranking: '',
-  team_id: '',
-  team_name: '',
-  wl_ratio: '',
+    captain_name: '',
+    coach_id: '',
+    highest_score: 0,
+    highlights: '',
+    matches_lost: 0,
+    matches_played: 0,
+    matches_won: 0,
+    players: [],
+    ranking: '',
+    team_id: '',
+    team_name: '',
+    wl_ratio: '',
 })
 
   const fetchCoaches = async () => {
@@ -116,7 +83,7 @@ export default function HireCoach() {
       setLoading(true);
       const coachCollectionRef = collection(db, "coach"); // Reference to coach collection
       const coachSnapshot = await getDocs(coachCollectionRef); // Fetch all documents in coach collection
-      const coachList = coachSnapshot.docs.map((doc) => {
+      const coachesList = coachSnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           coach_id: data.coach_id,
@@ -129,10 +96,11 @@ export default function HireCoach() {
           team_id: data.team_id,
           username: data.username,
           profile_pic: data.profile_pic,
+          assigned_teams: data.assigned_teams,
         };
       });
 
-      setCoachList(coachList as Coach[]); 
+      setCoachList(coachesList as Coach[]); 
       setLoading(false);
     } catch (error) {
       console.error("Error fetching coachs:", error);
@@ -150,8 +118,6 @@ export default function HireCoach() {
             if (storedTeamOwnerData) {
             const parsedTeamOwnerData = JSON.parse(storedTeamOwnerData);
             console.log("Fetched User Data:", parsedTeamOwnerData); // Debugging
-            setUserData(parsedTeamOwnerData);
-            console.log("Parsed Team Owner Id",parsedTeamOwnerData.team_id);
             setTeamOwnerData(parsedTeamOwnerData);
             console.log("Daaata",teamOwnerData);
 
@@ -198,159 +164,75 @@ export default function HireCoach() {
 
   const confirmHire = async () => {
     try {
-        setLoading(true);
+      setLoading(true);
+  
       if (selectedCoach && teamOwnerData.team_id) {
-        // Check if team is already assigned to the coach
-        if (selectedCoach.team_id===teamOwnerData.team_id){
+        // Check if team is already assigned to the selected coach
+        if (selectedCoach.assigned_teams.includes(teamOwnerData.team_id)) {
           console.log("You are already assigned to this coach.");
           setAlertMessage("You are already assigned to this coach.");
           setAlertVisible(true);
           setLoading(false);
           return;
         }
+  
+        // Step 1: Find if the team is already assigned to another coach
+        const coachCollectionRef = collection(db, "coach");
+        const currentCoachQuery = query(coachCollectionRef, where("assigned_teams", "array-contains", teamOwnerData.team_id));
+        const currentCoachSnapshot = await getDocs(currentCoachQuery);
+  
+        if (!currentCoachSnapshot.empty) {
+          // Step 2: Remove the team from the previous coach's assigned_teams
+          const currentCoachDoc = currentCoachSnapshot.docs[0];
+          const currentCoachRef = doc(db, "coach", currentCoachDoc.id);
+          const updatedTeams = currentCoachDoc.data().assigned_teams.filter((teamId: string) => teamId !== teamOwnerData.team_id);
 
-        //either someone else or no one
-        // check if the team is already assigned to another coach or not
-        const coachCollectionRef2 = collection(db, "coach"); // Reference to coach collection
-        const q2 = query(coachCollectionRef2, where("team_id", "==", teamOwnerData.team_id));
-        const querySnapshot2 = await getDocs(q2);
-
-        // Fetching data from team collection
-        const teamCollectionRef2 = collection(db, "team"); // Reference to coach collection
-        const q4 = query(teamCollectionRef2, where("team_id", "==", teamData.team_id));
-        const querySnapshot4 = await getDocs(q4);
-
-        
-        if (!querySnapshot2.empty && !querySnapshot4.empty) {
-            //Team id is already assigned to another coach
-            //Remove team id from the assigned_players array of the coach
-
-          const coachDoc2 = querySnapshot2.docs[0];
-          const coachDocId2 = coachDoc2.id;
-          const coachDocRef2 = doc(db, "coach", coachDocId2);
-          const coachData2 = coachDoc2.data();
-
-          const TeamDoc2 = querySnapshot4.docs[0];
-          const TeamDocId2 = TeamDoc2.id;
-          const TeamDocRef2 = doc(db, "team", TeamDocId2);
-          const TeamData2 = TeamDoc2.data();
-
-         
-
-          console.log("Abhi likha",TeamData2);
-          
-          const assignedTeam=coachData2.team_id;
-
-          const TeamName=TeamData2.team_name;
-          
-           const updatedAssignedTeam = assignedTeam === teamOwnerData.team_id ? null : assignedTeam;
-
-          if (assignedTeam === teamOwnerData.team_id) {
-            // Remove the team from the previous coach
-            await updateDoc(coachDocRef2, { team_id: updatedAssignedTeam }); // Update team_id to null if no teams left
-        
-            // Set the coach list state as needed
-
-            // const teamDocRef = doc(db, "team", teamOwnerData.team_id);
-             await updateDoc(TeamDocRef2, { coach_id: selectedCoach.coach_id });
-
-            setCoachList((prevCoach) =>
-              prevCoach.map((coach) =>
-                  coach.coach_id === coachData2.coach_id
-                      ? { ...coach, team_id: "" } // Clear the team_id for the previous coach
-                      : coach,
-                      
-              )
-          );
-          }
-
-          console.log(`Removed team with ID: ${teamOwnerData.team_id} from coach with ID: ${coachData2.coach_id}`);
-          setCheckifnocoach(true);
+  
+          await updateDoc(currentCoachRef, { assigned_teams: updatedTeams });
+          console.log(`Removed team with ID: ${teamOwnerData.team_id} from previous coach`);
         }
-
-        //team id is not assigned to any coach
-        // team player to the selected coach
-
-        const coachCollectionRef3 = collection(db, "coach"); // Reference to coach collection
-        const q3 = query(coachCollectionRef3, where("coach_id", "==", selectedCoach.coach_id));
-        const querySnapshot3 = await getDocs(q3);
-
-        // Fetching data from team collection
-        const teamCollectionRef3 = collection(db, "team"); // Reference to coach collection
-        const q5 = query(teamCollectionRef3, where("team_id", "==", teamData.team_id));
-        const querySnapshot5 = await getDocs(q5);
-
-        if (!querySnapshot3.empty  && !querySnapshot5.empty) {
-          const coachDoc3 = querySnapshot3.docs[0];
-          const coachDocId3 = coachDoc3.id;
-          const coachDocRef3 = doc(db, "coach", coachDocId3);
-          const coachData3 = coachDoc3.data();
-
-          const TeamDoc3 = querySnapshot4.docs[0];
-          const TeamDocId3 = TeamDoc3.id;
-          const TeamDocRef3 = doc(db, "team", TeamDocId3);
-          const TeamData3 = TeamDoc3.data();
-        
-          const updatedTeamId=teamOwnerData.team_id;
-
-          await updateDoc(coachDocRef3, { team_id: updatedTeamId });
-
-          // const teamDocRef = doc(db, "team", teamOwnerData.team_id);
-             await updateDoc(TeamDocRef3, { coach_id: selectedCoach.coach_id });
+  
+        // Step 3: Add the team to the selected coach's assigned_teams
+        const Q = query(coachCollectionRef, where("coach_id", "==", selectedCoach.coach_id));
+        const snapshot = await getDocs(Q);
+        if (!snapshot.empty) {
+          const doca = snapshot.docs[0];
+          const docRef = doc(db, "coach", doca.id);
+          await updateDoc(docRef, { assigned_teams: arrayUnion(teamOwnerData.team_id) });
           
-          setCoachList((prevCoach) => ({
-            ...prevCoach,
-            team_id: teamOwnerData.team_id // Replace with the new team ID you want to assign
-            
-          }));
-
-          console.log(`Updated assigned players for coach with ID: ${selectedCoach.coach_id}`);
-          setModalVisible(false);
-          checkifnocoach? setAlertMessage("Coach changed successfully.\nContact your coach") : setAlertMessage("Coach hired successfully.\nContact your coach");
-            setAlertVisible(true);
-            setCheckifnocoach(false);
-
+        }
+        
+  
+        // Step 4: Update the team’s coach_id to the new coach’s ID
+        const teamCollectionRef = collection(db, "team");
+        const teamQuery = query(teamCollectionRef, where("team_id", "==", teamOwnerData.team_id));
+        const teamSnapshot = await getDocs(teamQuery);
+  
+        if (!teamSnapshot.empty) {
+          const teamDoc = teamSnapshot.docs[0];
+          const teamRef = doc(db, "team", teamDoc.id);
+  
+          await updateDoc(teamRef, { coach_id: selectedCoach.coach_id });
+          console.log(`Updated team with ID: ${teamOwnerData.team_id} to new coach with ID: ${selectedCoach.coach_id}`);
         } else {
-            console.error("Coach not found");
+          console.error("Team not found");
         }
+        await fetchCoaches();
   
-        // Update coach's assigned players by appending the player's ID
-        // const coachCollectionRef = collection(db, "coach"); // Reference to coach collection
-        // const q = query(coachCollectionRef, where("coach_id", "==", selectedCoach.coach_id));
-        // const querySnapshot = await getDocs(q);
-  
-        // if (!querySnapshot.empty) {
-        //   const coachDoc = querySnapshot.docs[0];
-        //   const coachDocId = coachDoc.id;
-        //   const coachDocRef = doc(db, "coach", coachDocId);
-  
-        //   // Append player_id to assigned_players array
-        //   const updatedAssignedPlayers = [...selectedCoach.assigned_players, userData.player_id];
-          
-        //   // Update the document in Firestore
-        //   await updateDoc(coachDocRef, { assigned_players: updatedAssignedPlayers });
-        //   selectedCoach.assigned_players = updatedAssignedPlayers;
-        
-
-        //   console.log(Updated assigned players for coach with ID: ${selectedCoach.coach_id});
-        //     setAlertMessage("Coach hired successfully.");
-        //     setAlertVisible(true);
-        //   // Close modal and reset fields after confirmation
-        //   setModalVisible(false);
-        //   setCoachId("");  // This line is likely not needed now since you are using player_id from userData
-        // } else {
-        //   console.error("Coach not found");
-        // }
+        // Success message
+        setAlertMessage("Coach assignment successful. Contact your coach.");
+        setAlertVisible(true);
+        setModalVisible(false);
       } else {
-        console.error("Selected coach or player ID is missing.");
+        console.error("Selected coach or Team ID is missing.");
       }
     } catch (error) {
       console.error("Error hiring coach:", error);
-    }
-    finally{
-        setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -387,7 +269,7 @@ export default function HireCoach() {
                 <TouchableOpacity key={coach.coach_id} style={[
                     styles.coachCard,
                     // Highlight your coach with a yellow border
-                    coach.team_id===teamOwnerData.team_id && {
+                    coach.assigned_teams.includes(teamOwnerData.team_id) && {
                       borderColor: "yellow",
                       borderWidth: 2,
                     },

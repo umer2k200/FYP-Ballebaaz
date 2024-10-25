@@ -61,6 +61,7 @@ interface player {
   economyRate: number,
   bowlingStrikeRate: number,
   profile_pic: string;
+  maidenOvers: number;
 }
 
 export default function CoachAssignedPlayers() {
@@ -104,6 +105,7 @@ export default function CoachAssignedPlayers() {
     economyRate : 0,
     bowlingStrikeRate : 0,
     profile_pic: '',
+    maidenOvers: 0,
   });
 
   useEffect(() => {
@@ -226,6 +228,7 @@ export default function CoachAssignedPlayers() {
           economyRate : bookingData.economyRate,
           bowlingStrikeRate : bookingData.bowlingStrikeRate,
           profile_pic: bookingData.profile_pic,
+          maidenOvers: bookingData.maidenOvers,
         };
         bookingsData.push(booking);
       }
@@ -342,6 +345,7 @@ export default function CoachAssignedPlayers() {
             economyRate : userData.economyRate,
             bowlingStrikeRate : userData.bowlingStrikeRate,
             profile_pic: userData.profile_pic,
+            maidenOvers: userData.maidenOvers,
           };
 
           await AsyncStorage.setItem(

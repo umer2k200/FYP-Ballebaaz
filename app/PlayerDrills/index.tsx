@@ -35,7 +35,7 @@ export default function DrillsScreen() {
     team_id: "",
     preferred_hand: "",
     bowling_hand: "",
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
     weight: 0,
     height: 0,
@@ -59,6 +59,8 @@ export default function DrillsScreen() {
     bowlingStrikeRate : 0,
   });
 
+  const [drillsExist, setDrillsExist] = useState(false);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -67,6 +69,9 @@ export default function DrillsScreen() {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data in drills:", parsedUserData); // Debugging
           setUserData(parsedUserData);
+          if(parsedUserData.assigned_drills !== ''){
+            setDrillsExist(true);
+          }
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
@@ -107,7 +112,7 @@ export default function DrillsScreen() {
   return (
     <View style={styles.container}>
       {/* Popup Message */}
-      {popupVisible && (
+      {drillsExist && popupVisible && (
         <View style={styles.popup}>
           <Text style={styles.popupText}>Your coach has assigned you:</Text>
           <Text style={styles.popupText}>{userData.assigned_drills} drills</Text>

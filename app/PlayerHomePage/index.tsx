@@ -53,6 +53,7 @@ export default function ProfileScreen() {
     economyRate : 0,
     bowlingStrikeRate : 0,
     profile_pic: '',
+    maidenOvers: 0,
   });
   const [teamExists, setTeamExists] = useState(true);
   const router = useRouter();
@@ -350,6 +351,12 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Maiden Overs</Text>
+              <Text style={styles.statValue}>
+                {userData.maidenOvers }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
               <Text style={styles.statLabel}>Runs Scored</Text>
               <Text style={styles.statValue}>
                 {userData.runsScored }
@@ -499,6 +506,12 @@ export default function ProfileScreen() {
               <Text style={styles.statLabel}>Five Wickets</Text>
               <Text style={styles.statValue}>
                 {userData.fiveWickets }
+              </Text>
+            </View>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Maiden Overs</Text>
+              <Text style={styles.statValue}>
+                {userData.maidenOvers }
               </Text>
             </View>
             <View style={styles.statRow}>

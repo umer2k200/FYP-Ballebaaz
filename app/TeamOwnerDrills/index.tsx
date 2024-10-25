@@ -40,7 +40,7 @@ export default function DrillsScreen() {
     preferred_hand: "",
     bowling_hand: "",
     average: 0,
-    training_sessions: [],
+    training_sessions: '',
     assigned_drills: "",
     wickets_taken: 0,
     weight: 0,
@@ -59,6 +59,7 @@ export default function DrillsScreen() {
 
   })
 
+  const [drillsExist, setDrillsExist] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -68,7 +69,7 @@ export default function DrillsScreen() {
 
           const parsedUserData = JSON.parse(storedTeamOwnerData);
           console.log("Fetched User Data in drills:", parsedUserData); // Debugging
-          setUserData(parsedUserData);
+          setTeamOwnerData(parsedUserData);
 
           const teamOwnerPlayerId=parsedUserData.player_id;
           console.log("TeamoOwnerPlayerId: ",teamOwnerPlayerId);
@@ -91,6 +92,9 @@ export default function DrillsScreen() {
             console.log("Fetched TeamOwner Player Data:", playerData2);
             
             setUserData(playerData2 as any);
+            if(playerData2.assigned_drills !== ""){
+              setDrillsExist(true);
+            }
             
           }
 
@@ -142,7 +146,7 @@ export default function DrillsScreen() {
   return (
     <View style={styles.container}>
       {/* Popup Message */}
-      {popupVisible && (
+      {drillsExist && popupVisible && (
         <View style={styles.popup}>
           <Text style={styles.popupText}>Your coach has assigned you:</Text>
           <Text style={styles.popupText}>{userData.assigned_drills} drills</Text>

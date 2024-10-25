@@ -3,30 +3,36 @@ import {
   View,
   Text,
   TextInput,
-  Alert,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
   ScrollView,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { doc, updateDoc, getDocs, query, where, collection } from "firebase/firestore";
-import { db } from "@/firebaseConfig"; // Ensure your firebaseConfig is correctly set up
+import * as ImagePicker from "expo-image-picker";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  doc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  collection,
+} from "firebase/firestore";
+import { db, storage } from "@/firebaseConfig"; // Ensure your firebaseConfig is correctly set up
 import CustomAlert from "@/components/CustomAlert";
-//import { ScrollView } from "react-native-gesture-handler";
-//import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 
 export default function TeamOwnerSettingsScreen() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
   const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [teamExists, setTeamExists] = useState(false);
 
   const [userData, setUserData] = useState({
     username: "",
@@ -36,6 +42,7 @@ export default function TeamOwnerSettingsScreen() {
   });
 
   const [teamName, setTeamName] = useState("");
+  const [profile_pic, setProfilePic] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -44,9 +51,9 @@ export default function TeamOwnerSettingsScreen() {
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
           setUserData(parsedUserData);
-          setUsername(parsedUserData.username);
-          // setPhoneNumber(parsedUserData.phone_no.toString());
-          setEmail(parsedUserData.email);
+          if (parsedUserData.team_id !== "") {
+            setTeamExists(true);
+          }
 
           const TeamId = parsedUserData.team_id;
 
@@ -69,8 +76,8 @@ export default function TeamOwnerSettingsScreen() {
             console.log("Fetched TeamOwner Team Name:", playerData2.team_name);
 
             setTeamName(playerData2.team_name);
+            setProfilePic(playerData2.profile_pic);
             console.log("Fetched TeamOwner Team Name from set:", teamName);
-
           }
         }
       } catch (error) {
@@ -80,6 +87,49 @@ export default function TeamOwnerSettingsScreen() {
 
     fetchUserData();
   }, []);
+
+  const handleImagePicker = async () => {
+    // Request permission to access media library
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access the media library is required!");
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setSelectedImage(result.assets[0].uri); // Set selected image URI from the assets array
+    }
+  };
+
+  const uploadImageToFirebase = async (uri: string) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const playerId = userData.team_id;
+      const storageRef = ref(storage, `profile_pictures/${playerId}`); // Create a storage reference with the player ID
+
+      const snapshot = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      return downloadURL; // Return the image download URL
+    } catch (error) {
+      console.error("Error uploading image: ", error);
+      throw error;
+    }
+  };
+
+  const logoutButtonPressed = () => {
+    setModalVisible(true);
+  };
 
   const handleLogout = async () => {
     try {
@@ -98,36 +148,6 @@ export default function TeamOwnerSettingsScreen() {
   };
 
   const handleUpdate = async () => {
-    const phoneRegex = /^03[0-9]{9}$/;
-    const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
-    const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // Validation for Username
-    if (username && !usernameRegex.test(username)) {
-      setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
-      setAlertVisible(true);
-      return;
-    }
-
-    // Validation for Phone Number
-    if (phoneNumber && !phoneRegex.test(phoneNumber)) {
-      setAlertMessage("Invalid phone number. It should start with '03' and contain 11 digits.");
-      setAlertVisible(true);
-      return;
-    }
-
-    // Validation for Password
-    if (password && !passwordRegex.test(password)) {
-      setAlertMessage("Password must be at least 8 characters and contain at least one letter and one number.");
-      setAlertVisible(true);
-      return;
-    }
-    if (email && !emailRegex.test(email)) {
-      setAlertMessage("Invalid email format.");
-      setAlertVisible(true);
-      return;
-    }
-
     try {
       setLoading(true);
       const storedUserData = await AsyncStorage.getItem("userData");
@@ -135,39 +155,26 @@ export default function TeamOwnerSettingsScreen() {
       if (storedUserData) {
         const parsedUserData = JSON.parse(storedUserData);
         const userTeamId = parsedUserData.team_id;
-        const playerId = parsedUserData.player_id;
 
         const teamCollectionRef = collection(db, "team"); // Adjust the collection name as per your Firestore setup
-        const playerCollectionRef = collection(db, "player");
-        const q = query(teamCollectionRef, where("team_id", "==", userTeamId));
-        const q2 = query(playerCollectionRef, where("player_id", "==", playerId));
-        const querySnapshot = await getDocs(q);
-        const querySnapshot2 = await getDocs(q2);
 
-        if (!querySnapshot.empty && !querySnapshot2.empty) {
+        const q = query(teamCollectionRef, where("team_id", "==", userTeamId));
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
           const teamDoc = querySnapshot.docs[0];
-          const playerDoc = querySnapshot2.docs[0];
           const teamDocId = teamDoc.id;
-          const playerDocId = playerDoc.id;
-          const teamData2=teamDoc.data();
+          const teamData2 = teamDoc.data();
 
           const teamDocRef = doc(db, "team", teamDocId);
           await updateDoc(teamDocRef, {
             team_name: teamName || teamData2.team_name,
-
+            profile_pic: profile_pic || teamData2.profile_pic,
           });
 
-          const updatedUserData = {
-            ...parsedUserData,
-            username: username || parsedUserData.username,
-
-            password: password || parsedUserData.password,
-
-          };
-
-          await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
           setLoading(false);
-          setAlertMessage("Profile updated successfully!");
+          setAlertMessage("Team Profile updated successfully!");
           setAlertVisible(true);
         } else {
           setAlertMessage("Team document not found in Firestore.");
@@ -190,11 +197,8 @@ export default function TeamOwnerSettingsScreen() {
     setAlertVisible(false);
   };
 
-
   return (
-
     <View style={styles.container}>
-
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#005B41" />
@@ -203,37 +207,47 @@ export default function TeamOwnerSettingsScreen() {
         <>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             <Text style={styles.title}>Settings</Text>
+            {/* Image Picker */}
+            {teamExists && (
+              <TouchableOpacity
+                onPress={handleImagePicker}
+                style={styles.imagePicker}
+              >
+                {selectedImage || profile_pic ? (
+                  <Image
+                    source={{ uri: selectedImage || profile_pic }}
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <Text style={styles.imagePickerText}>
+                    Select Profile Picture
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+            {teamExists && (
+              <>
+                <Text style={styles.label2}>Change the Team's logo</Text>
 
-            {/* Teamname Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Team Name</Text>
-              <TextInput
-                style={styles.input}
-                value={teamName}
-                onChangeText={setTeamName}
-                placeholder="Enter your Team name"
-                placeholderTextColor="#999"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Team Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={teamName}
+                    onChangeText={setTeamName}
+                    placeholder="Enter your Team name"
+                    placeholderTextColor="#999"
+                  />
+                </View>
 
-
-            {/* Password Input */}
-            {/* <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your new password"
-                secureTextEntry={true}
-                placeholderTextColor="#999"
-              />
-            </View> */}
-
-            {/* Update Button */}
-            <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
-              <Text style={styles.updateButtonText}>Update Profile</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.updateButton}
+                  onPress={handleUpdate}
+                >
+                  <Text style={styles.updateButtonText}>Update Team Name</Text>
+                </TouchableOpacity>
+              </>
+            )}
             {/* Atttributes Button */}
             <TouchableOpacity
               style={styles.attributesButton}
@@ -253,27 +267,58 @@ export default function TeamOwnerSettingsScreen() {
 
             {/* Personal Settings Button */}
 
-            <TouchableOpacity
+            {teamExists && (<><TouchableOpacity
               style={styles.PsettingButton}
               onPress={() => router.push("/TeamOwnerHireCoach")}
             >
               <Text style={styles.PsettingText}>Hire Coach</Text>
             </TouchableOpacity>
-            {/* Logout Button */}
 
-            {/* Personal Settings Button */}
+            
 
             <TouchableOpacity
               style={styles.PsettingButton}
               onPress={() => router.push("/TeamOwnerViewPlayers")}
             >
               <Text style={styles.PsettingText}>View Players</Text>
-            </TouchableOpacity>
+            </TouchableOpacity></>)}
 
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            {/* Logout Button */}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={logoutButtonPressed}
+            >
               <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
           </ScrollView>
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalDetails}>
+                  Are you sure you want to logout?
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={handleLogout}
+                  >
+                    <Text style={styles.buttonText}>Yes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
       {/* Custom Alert for messages */}
@@ -283,12 +328,9 @@ export default function TeamOwnerSettingsScreen() {
         onConfirm={handleAlertConfirm}
         onCancel={handleAlertConfirm}
       />
-
     </View>
-
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -296,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212", // Dark background color
     paddingHorizontal: 20,
     justifyContent: "center",
-    paddingBottom: 100,
+    paddingBottom: 50,
   },
   loaderContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -321,11 +363,17 @@ const styles = StyleSheet.create({
     color: "#bbb", // Softer color for labels
     marginBottom: 5,
   },
+  label2: {
+    fontSize: 16,
+    color: "#bbb", // Softer color for labels
+    marginBottom: 5,
+    alignSelf: "center",
+    paddingBottom: 20,
+  },
 
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
-
   },
   input: {
     backgroundColor: "#1e1e1e",
@@ -339,7 +387,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 50, // Rounded buttons for aesthetic appeal
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 0,
   },
   updateButtonText: {
     fontSize: 18,
@@ -351,7 +399,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 50,
     alignItems: "center",
-    marginVertical: 15,
+    marginTop: 12,
   },
   attributesButtonText: {
     fontSize: 18,
@@ -363,7 +411,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 50,
     alignItems: "center",
-    marginVertical: 15,
+    marginTop: 12,
   },
   PsettingText: {
     fontSize: 18,
@@ -375,10 +423,74 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 50,
     alignItems: "center",
+    marginTop: 12,
   },
   logoutButtonText: {
     fontSize: 18,
     color: "#fff",
     fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
+  modalView: {
+    backgroundColor: "#1e1e1e",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    color: "#fff",
+    marginBottom: 20,
+  },
+  modalDetails: {
+    color: "#bbb",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  confirmButton: {
+    backgroundColor: "#005B41",
+    padding: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#ff4c4c",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  imagePicker: {
+    marginBottom: 30,
+    borderRadius: 100,
+    width: 250,
+    height: 250,
+    justifyContent: "center",
+    alignContent: "center",
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "#f2f2f2",
+  },
+  imagePickerText: {
+    color: "#999",
+  },
+  profileImage: {
+    width: 250,
+    height: 250,
+    borderRadius: 100,
   },
 });
