@@ -173,7 +173,7 @@ export default function TeamOwnerProfileScreen() {
         {teamExists ? (<>
         <View style={styles.profilePicContainer}>
           <Image
-            source={teamData.profile_pic? {uri: teamData.profile_pic}: require('@/assets/images/Islu.jpg')} // Replace with dynamic profile pic URL if needed
+            source={teamData.profile_pic? {uri: teamData.profile_pic}: require('@/assets/images/assignedplayer.png')} // Replace with dynamic profile pic URL if needed
             style={styles.profilePic}
           />
         </View>

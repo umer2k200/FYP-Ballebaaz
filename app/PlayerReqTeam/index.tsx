@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomAlert from "@/components/CustomAlert";
 
 interface TeamData{
+  doc_id: string;
   captain_id: string;
   captain_name: string;
   coach_id: string;
@@ -93,9 +94,12 @@ export default function PlayerRequestTeam() {
       const teamsCollectionRef = collection(db, "team"); // Reference to the 'teams' collection in Firestore
       const teamsSnapshot = await getDocs(teamsCollectionRef); // Fetch all team documents
 
-      const teamsList = teamsSnapshot.docs.map((doc) => {
-        const data = doc.data(); // Get the document data
+      
+      let teamsList = teamsSnapshot.docs.map((doc) => {
+        const data = doc.data(); 
+        const wl_ratio = data.matches_won>-1 && data.matches_lost>0? (data.matches_won/data.matches_lost).toFixed(2).toString().concat(' %'): '0';
         return {
+          doc_id: doc.id,
           team_id: data.team_id,
           captain_id: data.captain_id,
           captain_name: data.captain_name,
@@ -108,12 +112,30 @@ export default function PlayerRequestTeam() {
           players: data.players,
           ranking: data.ranking,
           team_name: data.team_name,
-          wl_ratio: data.wl_ratio,
+          wl_ratio: wl_ratio,
         };
       });
+
+      teamsList.sort((a, b) => parseFloat(b.wl_ratio) - parseFloat(a.wl_ratio));
+      teamsList = teamsList.map((team, index) => ({
+        ...team,
+        ranking: (index + 1).toString(),
+      }));
+
+      //now here we will update the db too
+      
+      
+
       setTeams(teamsList as TeamData[]);
       console.log("Teams fetched:", teamsList);
       setLoading(false);
+      teamsList.forEach(async (team) => {
+        const teamRef = doc(db, 'team', team.doc_id);
+        await updateDoc(teamRef, {
+          ranking: team.ranking,
+          wl_ratio: team.wl_ratio,
+        });
+      });
     } catch (error) {
       console.error("Error fetching teams:", error);
       Alert.alert("Error", "An error occurred while fetching teams.");
@@ -243,7 +265,7 @@ export default function PlayerRequestTeam() {
           <Text style={styles.teamDetails}>Captain: {item.captain_name}</Text>
           <Text style={styles.teamDetails}>Players: {item.players.length}</Text>
           <Text style={styles.teamDetails}>Ranking: {item.ranking}</Text>
-          <Text style={styles.teamDetails}>W/L ratio: {item.wl_ratio}</Text>
+          <Text style={styles.teamDetails}>W/L ratio: {item.matches_won>-1 && item.matches_lost>0? (item.matches_won/item.matches_lost).toFixed(2).concat(' %'): '0'}</Text>
 
         </View>
       </View>

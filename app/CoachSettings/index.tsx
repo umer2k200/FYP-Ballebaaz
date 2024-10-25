@@ -15,6 +15,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc, getDocs, query, where, collection } from "firebase/firestore";
 import { db,storage } from "@/firebaseConfig";
 import CustomAlert from "@/components/CustomAlert";
+import { Modal } from 'react-native';
 
 export default function CoachSettings() {
   const [username, setUsername] = useState("");
@@ -23,6 +24,7 @@ export default function CoachSettings() {
   const [email, setEmail] = useState("");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [modalVisible,setModalVisible] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -96,6 +98,9 @@ export default function CoachSettings() {
       throw error;
     }
   };
+  const logoutButtonPressed = () => {
+    setModalVisible(true);
+  }
 
   const handleLogout = async () => {
     try {
@@ -298,11 +303,36 @@ export default function CoachSettings() {
 
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      <TouchableOpacity style={styles.logoutButton} onPress={logoutButtonPressed}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
 
       </ScrollView>
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            
+              
+            
+                <Text style={styles.modalDetails}>Are you sure you want to logout?</Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.confirmButton} onPress={handleLogout}>
+                    <Text style={styles.buttonText}>Yes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              
+            
+          </View>
+        </View>
+      </Modal>
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -504,5 +534,49 @@ const styles = StyleSheet.create({
     elevation: 10,
     borderColor: "#1e1e1e",
     borderWidth: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
+  modalView: {
+    backgroundColor: "#1e1e1e",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    color: "#fff",
+    marginBottom: 20,
+  },
+  modalDetails: {
+    color: "#bbb",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  confirmButton: {
+    backgroundColor: "#005B41",
+    padding: 10,
+    paddingHorizontal:20,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#ff4c4c",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });

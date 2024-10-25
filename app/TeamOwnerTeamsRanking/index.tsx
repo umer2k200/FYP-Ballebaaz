@@ -2,19 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from "expo-router";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, Image } from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from '@/firebaseConfig';
 
 interface TeamData {
+  doc_id: string;
   captain_id: string;
   captain_name: string;
   coach_id: string;
-  highest_score: number;
-  highlights: string;
+  highest_score: string;
+  highlights: string[];
   matches_lost: number;
   matches_played: number;
   matches_won: number;
-  players: string;
+  players: string[];
   ranking: string;
   team_id: string;
   team_name: string;
@@ -40,16 +41,44 @@ const TeamRanking = () => {
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "team"));
-        const teams: TeamData[] = [];
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data() as TeamData;
-          teams.push(data);
+        const teamsCollectionRef = collection(db,'team');
+        const querySnapshot = await getDocs(teamsCollectionRef);
+        let teamsList = querySnapshot.docs.map((doc) => {
+          const data = doc.data(); 
+          const wl_ratio = data.matches_won>-1 && data.matches_lost>0? (data.matches_won/data.matches_lost).toFixed(2).toString().concat(' %'): '0';
+          return {
+            doc_id: doc.id,
+            team_id: data.team_id,
+            captain_id: data.captain_id,
+            captain_name: data.captain_name,
+            coach_id: data.coach_id,
+            highest_score: data.highest_score,
+            highlights: data.highlights,
+            matches_lost: data.matches_lost,
+            matches_played: data.matches_played,
+            matches_won: data.matches_won,
+            players: data.players,
+            ranking: data.ranking,
+            team_name: data.team_name,
+            wl_ratio: wl_ratio,
+          };
         });
+        teamsList.sort((a, b) => parseFloat(b.wl_ratio) - parseFloat(a.wl_ratio));
+        teamsList = teamsList.map((team, index) => ({
+          ...team,
+          ranking: (index + 1).toString(),
+        }));
 
-        teams.sort((a, b) => b.wl_ratio - a.wl_ratio);
-        setTeamData(teams);
+
+        setTeamData(teamsList as any);
+
+        teamsList.forEach(async (team) => {
+          const teamRef = doc(db, 'team', team.doc_id);
+          await updateDoc(teamRef, {
+            ranking: team.ranking,
+            wl_ratio: team.wl_ratio,
+          });
+        });
       } catch (error) {
         console.error("Error fetching team data:", error);
       }
@@ -74,7 +103,10 @@ const TeamRanking = () => {
                 {team.team_name} {/* Add ranking number here */}
               </Text>
               <Text style={styles.winLossRatio}>
-                W/L Ratio: {team.wl_ratio} %
+                Ranking: {team.ranking}
+              </Text>
+              <Text style={styles.winLossRatio}>
+                W/L Ratio: {team.wl_ratio}
               </Text>
             </TouchableOpacity>
             {expandedTeamId === team.team_id && (
