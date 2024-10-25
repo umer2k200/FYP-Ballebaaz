@@ -7,9 +7,9 @@ import { doc, updateDoc, getDocs, query, where, collection } from 'firebase/fire
 import CustomAlert from '@/components/CustomAlert';
 
 export default function PlayerAttributesScreen() {
-  const [role, setRole] = useState('');
-  const [battingHand, setBattingHand] = useState('');
-  const [bowlingHand, setBowlingHand] = useState('');
+  const [role, setRole] = useState<string>('');
+  const [battingHand, setBattingHand] = useState<string>('');
+  const [bowlingHand, setBowlingHand] = useState<string>('');
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
   const [heightFeet, setHeightFeet] = useState('');
@@ -56,22 +56,56 @@ export default function PlayerAttributesScreen() {
     bowlingStrikeRate : 0,
   });
 
+  const [teamOwnerData,setTeamOwnerData] = useState({
+    teamOwner_id: "",
+    player_id: "",
+    team_id:"",
+    username:  "",
+    password: "",
+  })
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const storedUserData = await AsyncStorage.getItem("userData");
-        if (storedUserData) {
-          const parsedUserData = JSON.parse(storedUserData);
-          console.log("Fetched User Data:", parsedUserData); // Debugging
+        const storedTeamOwnerData = await AsyncStorage.getItem("userData");
+
+        if (storedTeamOwnerData) {
+          const parsedUserData = JSON.parse(storedTeamOwnerData);
+          console.log("Fetched User Datassss:", parsedUserData); // Debugging
           setUserData(parsedUserData);
 
+          const teamOwnerPlayerId=parsedUserData.player_id;
+
+          console.log("TeamoOwnerPlayerId: ",teamOwnerPlayerId);
+
+           // Step 2: Query the "player" collection for the document with this player_id
+           const teamCollectionRef = collection(db, "player");
+
+           const q = query(teamCollectionRef, where("player_id", "==", teamOwnerPlayerId));
+           const querySnapshot = await getDocs(q);
+
+           if (!querySnapshot.empty) {
+            // Assuming there's only one matching document
+            const playerDoc = querySnapshot.docs[0];
+            const playerDocId = playerDoc.id;
+            const playerData2 = playerDoc.data(); // Explicitly cast the data to TeamData type
+    
+            // Step 3: Use teamData for rendering or updating state
+            console.log("Fetched TeamOwner Player Data:", playerData2);
+
           // Set state based on the fetched user data
-          setRole(parsedUserData.role || '');
-          setBattingHand(parsedUserData.preferred_hand === 'Right' || parsedUserData.preferred_hand === 'Left' ? parsedUserData.preferred_hand.split(' ')[0] : '');
-          setBowlingHand(parsedUserData.bowling_hand === 'Right' || parsedUserData.bowling_hand === 'Left' ? parsedUserData.bowling_hand.split(' ')[0] : '');
-          setAge(parsedUserData.age.toString() || '');
-          setWeight(parsedUserData.weight.toString() || '');
-          setHeightFeet(parsedUserData.height.toString() || '');
+          setRole(playerData2.role || '');
+          setBattingHand(playerData2.preferred_hand === 'Right' || playerData2.preferred_hand === 'Left' ? playerData2.preferred_hand.split(' ')[0] : '');
+          setBowlingHand(playerData2.bowling_hand === 'Right' || playerData2.bowling_hand === 'Left' ? playerData2.bowling_hand.split(' ')[0] : '');
+          setAge(playerData2.age.toString() || '');
+          setWeight(playerData2.weight.toString() || '');
+          setHeightFeet(playerData2.height.toString() || '');
+           }
+
+           else {
+            console.log("No player found with this player ID");
+          }
+          
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
@@ -90,7 +124,7 @@ export default function PlayerAttributesScreen() {
             const userPlayerId = parsedUserData.player_id;
 
             // Fetch player_id from teamOwner collection
-            const teamOwnerCollectionRef = collection(db, "Player");
+            const teamOwnerCollectionRef = collection(db, "player");
             const teamOwnerQuery = query(teamOwnerCollectionRef, where("player_id", "==", userPlayerId));
             const teamOwnerSnapshot = await getDocs(teamOwnerQuery);
 

@@ -35,6 +35,8 @@ export default function TeamOwnerSettingsScreen() {
     team_id: "",
   });
 
+  const [teamName, setTeamName] = useState("");
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -45,6 +47,31 @@ export default function TeamOwnerSettingsScreen() {
           setUsername(parsedUserData.username);
           // setPhoneNumber(parsedUserData.phone_no.toString());
           setEmail(parsedUserData.email);
+
+          const TeamId = parsedUserData.team_id;
+
+          console.log("TeamoOwnerTeamId: ", TeamId);
+
+          // Step 2: Query the "team" collection for the document with this player_id
+          const teamCollectionRef = collection(db, "team");
+
+          const q = query(teamCollectionRef, where("team_id", "==", TeamId));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            // Assuming there's only one matching document
+            const playerDoc = querySnapshot.docs[0];
+            const playerDocId = playerDoc.id;
+            const playerData2 = playerDoc.data(); // Explicitly cast the data to TeamData type
+
+            // Step 3: Use teamData for rendering or updating state
+            console.log("Fetched TeamOwner Team Data:", playerData2);
+            console.log("Fetched TeamOwner Team Name:", playerData2.team_name);
+
+            setTeamName(playerData2.team_name);
+            console.log("Fetched TeamOwner Team Name from set:", teamName);
+
+          }
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
@@ -72,35 +99,35 @@ export default function TeamOwnerSettingsScreen() {
 
   const handleUpdate = async () => {
     const phoneRegex = /^03[0-9]{9}$/;
-  const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
-  const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // Validation for Username
-  if (username && !usernameRegex.test(username)) {
-    setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
-    setAlertVisible(true);
-    return;
-  }
+    const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
+    const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validation for Username
+    if (username && !usernameRegex.test(username)) {
+      setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
+      setAlertVisible(true);
+      return;
+    }
 
-  // Validation for Phone Number
-  if (phoneNumber && !phoneRegex.test(phoneNumber)) {
-    setAlertMessage("Invalid phone number. It should start with '03' and contain 11 digits.");
-    setAlertVisible(true);
-    return;
-  }
+    // Validation for Phone Number
+    if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+      setAlertMessage("Invalid phone number. It should start with '03' and contain 11 digits.");
+      setAlertVisible(true);
+      return;
+    }
 
-  // Validation for Password
-  if (password && !passwordRegex.test(password)) {
-    setAlertMessage("Password must be at least 8 characters and contain at least one letter and one number.");
-    setAlertVisible(true);
-    return;
-  }
-  if (email && !emailRegex.test(email)) {
-    setAlertMessage("Invalid email format.");
-    setAlertVisible(true);
-    return;
-  }
-  
+    // Validation for Password
+    if (password && !passwordRegex.test(password)) {
+      setAlertMessage("Password must be at least 8 characters and contain at least one letter and one number.");
+      setAlertVisible(true);
+      return;
+    }
+    if (email && !emailRegex.test(email)) {
+      setAlertMessage("Invalid email format.");
+      setAlertVisible(true);
+      return;
+    }
+
     try {
       setLoading(true);
       const storedUserData = await AsyncStorage.getItem("userData");
@@ -108,12 +135,12 @@ export default function TeamOwnerSettingsScreen() {
       if (storedUserData) {
         const parsedUserData = JSON.parse(storedUserData);
         const userTeamId = parsedUserData.team_id;
-        const playerId=parsedUserData.player_id;
-        
+        const playerId = parsedUserData.player_id;
+
         const teamCollectionRef = collection(db, "team"); // Adjust the collection name as per your Firestore setup
-        const playerCollectionRef=collection(db,"player");
+        const playerCollectionRef = collection(db, "player");
         const q = query(teamCollectionRef, where("team_id", "==", userTeamId));
-        const q2=query(playerCollectionRef, where("player_id","==",playerId));
+        const q2 = query(playerCollectionRef, where("player_id", "==", playerId));
         const querySnapshot = await getDocs(q);
         const querySnapshot2 = await getDocs(q2);
 
@@ -122,21 +149,20 @@ export default function TeamOwnerSettingsScreen() {
           const playerDoc = querySnapshot2.docs[0];
           const teamDocId = teamDoc.id;
           const playerDocId = playerDoc.id;
+          const teamData2=teamDoc.data();
 
           const teamDocRef = doc(db, "team", teamDocId);
           await updateDoc(teamDocRef, {
-            username: username || parsedUserData.username,
-           
-            password: password || parsedUserData.password,
-            
+            team_name: teamName || teamData2.team_name,
+
           });
 
           const updatedUserData = {
             ...parsedUserData,
             username: username || parsedUserData.username,
-            
+
             password: password || parsedUserData.password,
-           
+
           };
 
           await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
@@ -164,102 +190,102 @@ export default function TeamOwnerSettingsScreen() {
     setAlertVisible(false);
   };
 
- 
+
   return (
-    
+
     <View style={styles.container}>
-      
+
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ) : (
         <>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Text style={styles.title}>Settings</Text>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Text style={styles.title}>Settings</Text>
 
-          {/* Username Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>User Name</Text>
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Enter your user name"
-              placeholderTextColor="#999"
-            />
-          </View>
+            {/* Teamname Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Team Name</Text>
+              <TextInput
+                style={styles.input}
+                value={teamName}
+                onChangeText={setTeamName}
+                placeholder="Enter your Team name"
+                placeholderTextColor="#999"
+              />
+            </View>
 
 
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your new password"
-              secureTextEntry={true}
-              placeholderTextColor="#999"
-            />
-          </View>
+            {/* Password Input */}
+            {/* <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your new password"
+                secureTextEntry={true}
+                placeholderTextColor="#999"
+              />
+            </View> */}
 
-          {/* Update Button */}
-          <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
-            <Text style={styles.updateButtonText}>Update Profile</Text>
-          </TouchableOpacity>
-          {/* Atttributes Button */}
-          <TouchableOpacity
-            style={styles.attributesButton}
-            onPress={() => router.push("/TeamOwnerAttributes")}
-          >
-            <Text style={styles.attributesButtonText}>Attributes</Text>
-          </TouchableOpacity>
+            {/* Update Button */}
+            <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+              <Text style={styles.updateButtonText}>Update Profile</Text>
+            </TouchableOpacity>
+            {/* Atttributes Button */}
+            <TouchableOpacity
+              style={styles.attributesButton}
+              onPress={() => router.push("/TeamOwnerAttributes")}
+            >
+              <Text style={styles.attributesButtonText}>Attributes</Text>
+            </TouchableOpacity>
 
-          {/* Personal Settings Button */}
+            {/* Personal Settings Button */}
 
-          <TouchableOpacity
-            style={styles.PsettingButton}
-            onPress={() => router.push("/TeamOwnerPersonalSettings")}
-          >
-            <Text style={styles.PsettingText}>Personal Settings</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.PsettingButton}
+              onPress={() => router.push("/TeamOwnerPersonalSettings")}
+            >
+              <Text style={styles.PsettingText}>Personal Settings</Text>
+            </TouchableOpacity>
 
-          {/* Personal Settings Button */}
+            {/* Personal Settings Button */}
 
-          <TouchableOpacity
-            style={styles.PsettingButton}
-            onPress={() => router.push("/TeamOwnerHireCoach")}
-          >
-            <Text style={styles.PsettingText}>Hire Coach</Text>
-          </TouchableOpacity>
-          {/* Logout Button */}
+            <TouchableOpacity
+              style={styles.PsettingButton}
+              onPress={() => router.push("/TeamOwnerHireCoach")}
+            >
+              <Text style={styles.PsettingText}>Hire Coach</Text>
+            </TouchableOpacity>
+            {/* Logout Button */}
 
-          {/* Personal Settings Button */}
+            {/* Personal Settings Button */}
 
-          <TouchableOpacity
-            style={styles.PsettingButton}
-            onPress={() => router.push("/TeamOwnerViewPlayers")}
-          >
-            <Text style={styles.PsettingText}>View Players</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.PsettingButton}
+              onPress={() => router.push("/TeamOwnerViewPlayers")}
+            >
+              <Text style={styles.PsettingText}>View Players</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
           </ScrollView>
-          </>
+        </>
       )}
-          {/* Custom Alert for messages */}
-          <CustomAlert
-            visible={alertVisible}
-            message={alertMessage}
-            onConfirm={handleAlertConfirm}
-            onCancel={handleAlertConfirm}
-          />
-       
+      {/* Custom Alert for messages */}
+      <CustomAlert
+        visible={alertVisible}
+        message={alertMessage}
+        onConfirm={handleAlertConfirm}
+        onCancel={handleAlertConfirm}
+      />
+
     </View>
-    
+
   );
 }
 
@@ -285,7 +311,7 @@ const styles = StyleSheet.create({
     color: "#fff", // Light text color for dark mode
     textAlign: "center",
     marginBottom: 20,
-    marginTop:30,
+    marginTop: 30,
   },
   inputContainer: {
     marginBottom: 20,
@@ -295,7 +321,7 @@ const styles = StyleSheet.create({
     color: "#bbb", // Softer color for labels
     marginBottom: 5,
   },
- 
+
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
