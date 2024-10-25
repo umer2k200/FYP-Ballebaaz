@@ -51,7 +51,7 @@ export default function CoachHomeScreen() {
           const parsedUserData = JSON.parse(storedUserData);
           console.log("Fetched User Data:", parsedUserData); // Debugging
           setUserData(parsedUserData);
-          fetchPlayersData(parsedUserData.assigned_players);
+          fetchPlayersData(parsedUserData.assigned_players, true);
         }
       } catch (error) {
         console.log("Error fetching user data:", error);

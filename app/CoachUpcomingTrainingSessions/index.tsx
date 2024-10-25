@@ -23,8 +23,41 @@ import { useFocusEffect } from '@react-navigation/native';
 
 interface Player {
   name: string;
+  username: string;
+  phone_no: string;
+  password: string;
+  fitness_status: string;
+  matches_played: number;
+  highlights: [];
+  team_id: string;
+  height: number;
+  email: string;
+  fiveWickets: number;
+  requestAccepted: boolean;
+  runsScored: number;
+  ballsFaced: number;
+  battingAverage: number;
+  battingStrikeRate: number;
+  noOfTimesOut: number;
+  centuries: number;
+  halfCenturies: number;
+  oversBowled: number;
+  ballsBowled: number;
+  runsConceded: number;
+  wicketsTaken: number;
+  bowlingAverage: number;
+  bowlingStrikeRate: number;
+  economyRate: number;
   player_id: string;
+  age: number;
+  role: string;
+  preferred_hand: string;
+  training_sessions: string;
+  weight: number;
   assigned_drills: string;
+  bowling_hand: string;
+  best_bowling: string;
+  profile_pic: string;
 }
 
 interface Session {
@@ -125,7 +158,6 @@ export default function CoachTrainingSessions() {
         const playerDoc = await getDoc(userDocRef);
   
         if (playerDoc.exists()) {
-          console.log("Player document found:", playerDoc.data()); // Debugging log
           const playerData = playerDoc.data();
           const trainingSessionsString = playerData?.training_sessions || "";
   
@@ -137,14 +169,22 @@ export default function CoachTrainingSessions() {
             const [dateAndType, location] = entry.split(" at ");
             const [date, sessionType] = dateAndType.split(" - ");
   
-            sessionsArray.push({
-              playerName: playerData.name, // Assuming you want to include the player's name
-              sessionType: sessionType || "",
-              date: date || "",
-              time: "", // You can set this if you have a specific format
-              location: location || "",
-            });
+            // Only push sessions if the player is assigned to the current coach
+            const isPlayerAssigned = assignedPlayersData.some(
+              (assignedPlayer) => assignedPlayer.player_id === playerId
+            );
+  
+            if (isPlayerAssigned) {
+              sessionsArray.push({
+                playerName: playerData.name,
+                sessionType: sessionType || "",
+                date: date || "",
+                time: "", // You can set this if you have a specific format
+                location: location || "",
+              });
+            }
           });
+  
           setTrainingSessions(sessionsArray);
           await AsyncStorage.setItem("cachedTrainingSessions", JSON.stringify(sessionsArray));
         } else {
@@ -157,6 +197,7 @@ export default function CoachTrainingSessions() {
       console.error("Error fetching training sessions:", error);
     }
   };
+  
 
   // Refresh player data
   const onRefresh = async () => {
@@ -223,7 +264,7 @@ export default function CoachTrainingSessions() {
           // Create the reference to the Firestore document using the fetched userDocId
           const userDocRef = doc(db, "player", userDocId);
 
-          const updatedSessions = `${newSession.date} - ${newSession.sessionType} at ${newSession.location}`;
+          const updatedSessions = `${newSession.date} - ${newSession.sessionType} at ${newSession.location} at ${newSession.time}`;
 
           // Update player's training_sessions
           await updateDoc(userDocRef, {
@@ -241,7 +282,7 @@ export default function CoachTrainingSessions() {
             location: "",
           });
 
-          fetchTrainingSessions(selectedPlayer.player_id);
+          //fetchTrainingSessions(selectedPlayer.player_id);
 
         } else {
           setAlertMessage("No matching player document found");
@@ -268,7 +309,7 @@ const handleAlertConfirm = () => {
         <Text style={styles.pageTitle}>Training Sessions</Text>
       </View>
 
-      <ScrollView
+      {/*<ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
@@ -291,6 +332,22 @@ const handleAlertConfirm = () => {
               <Text style={styles.sessionInfo3}>{session.location}</Text>
             </Text>
           </View>
+        ))}
+      </ScrollView> */}
+
+<ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {assignedPlayersData.map((player, index) => (
+          <TouchableOpacity key={index} style={styles.playerCard}>
+            <View style={styles.sessionCard}>
+              <View style={styles.playerDetails}>
+                <Text style={styles.sessionInfo2}>{player.name}</Text>
+                <Text style={styles.drillsDetails}>Session: {player.training_sessions}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
@@ -486,6 +543,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sessionInfo2: {
+    fontSize: 16,
     color: "#005B41",
     fontWeight: "bold",
   },
@@ -522,6 +580,39 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#fff",
     marginBottom: 30,
+  },
+  playerCard: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 10,
+    marginBottom: 20,
+    padding: 15,
+    width: "95%",
+    alignSelf: "center",
+  },
+  playerInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  playerImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 15,
+  },
+  playerDetails: {
+    flex: 1,
+  },
+  playerName: {
+    color: "#fff",
+    fontSize: 18,
+  },
+  roleDetails: {
+    color: "#aaa",
+    fontSize: 14,
+  },
+  drillsDetails: {
+    color: "#aaa",
+    fontSize: 14,
   },
   modalInput: {
     backgroundColor: "#333",
