@@ -398,7 +398,7 @@ return (
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push("/UmpireScoring")}
+          onPress={() => router.push("/UmpireScoring1")}
         >
           <Image
             source={require("@/assets/images/cric.png")}

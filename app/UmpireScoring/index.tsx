@@ -1,3 +1,4 @@
+
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -17,7 +18,7 @@ export default function MatchDetailsScreen() {
       {/* Header with back button and match title */}
       <View style={styles.header}>
         <TouchableOpacity>
-          <Icon name="arrow-back" size={24} color="#fff" onPress={() => router.push("/UmpireHome")}/>
+          <Icon name="arrow-back" size={24} color="#fff" onPress={() => router.push("/UmpireScoring1")}/>
         </TouchableOpacity>
         <Text style={styles.matchTitle}>United vs Kings</Text>
       </View>
