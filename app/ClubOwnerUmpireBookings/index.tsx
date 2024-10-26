@@ -21,6 +21,8 @@ import {
   getDoc,
   where,
   updateDoc,
+  Timestamp,
+  addDoc,
 } from "firebase/firestore";
 import CustomAlert from "@/components/CustomAlert";
 
@@ -35,11 +37,13 @@ interface Umpire {
   mathes_officiated: string[];
 }
 
+
 export default function ClubOwnerUmpireBookings() {
   const router = useRouter();
   const [umpiresList, setUmpiresList] = useState<Umpire[]>([]); // Store fetched umpire details here
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
   const [selectedUmpire, setSelectedUmpire] = useState<Umpire | null>(null); // Selected umpire details
+  
   const [bookingId, setBookingId] = useState("");
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -56,6 +60,17 @@ export default function ClubOwnerUmpireBookings() {
     phone_no: 0,
     password: "",
     mathes_officiated: [] as string[],
+  });
+  const [bookingData, setBookingData] = useState({
+    booking_id: "",
+    dateTime: "",
+    ground_id: "",
+    team1: "",
+    team2: "",
+    payment_status: "",
+    umpire_id: "",
+    teamOwner_id: "",
+    price: 0,
   });
 
   const fetchUmpires = async () => {
@@ -109,11 +124,51 @@ export default function ClubOwnerUmpireBookings() {
         await updateDoc(bookingDocRef, {
           umpire_id: selectedUmpire.umpire_id,
         });
+        
 
         console.log(`Booking Umpire ID: ${selectedUmpire.umpire_id} with Booking ID: ${bookingId}`);
+
+        //fetch booking data
+        const bookingDetails = bookingDoc.data();
+        setBookingData(bookingDetails as any);
+
+        //add match data
+        const matchCollectionRef = collection(db, "match");
+        const matchData1 = {
+          dateTime: bookingDetails.dateTime,
+          ground_id: bookingDetails.ground_id,
+          highlights: [],
+          match_id: "M" + Math.floor(Math.random() * 1000),
+          result: "pending",
+          team1: bookingDetails.team1,
+          team2: bookingDetails.team2,
+          umpire_id: selectedUmpire.umpire_id,
+        };
+        await addDoc(matchCollectionRef, matchData1);
+
+
+
+        
+
+
+
+        //add match final document to the match collection
+        // const matchData1 = {
+        //   dateTime: matchData?.dateTime,
+        //   ground_id: matchData?.ground_id,
+        //   highlights: [],
+        //   match_id: matchData?.match_id,
+        //   result: "",
+        //   team1: matchData?.team1,
+        //   team2: matchData?.team2,
+        //   umpire_id: selectedUmpire.umpire_id,
+        // };
+        // const matchCollectionRef = collection(db,'match');
+        // await addDoc(matchCollectionRef,matchData);
+        
+        // Close modal after booking
         setAlertMessage("Umpire booked successfully");
         setAlertVisible(true);
-        // Close modal after booking
         setModalVisible(false);
         setBookingId(""); // Reset booking ID
         //setloading(false);
