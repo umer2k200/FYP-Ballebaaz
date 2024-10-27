@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,60 +6,134 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 
 import { useRouter } from "expo-router";
-const matches = [
-  {
-    matchId: "M001",
-    teamA: "Team Alpha",
-    teamB: "Team Beta",
-    date: "2024-11-10",
-    time: "15:00",
-    location: "Cricket Ground A",
-  },
-  {
-    matchId: "M002",
-    teamA: "Team Gamma",
-    teamB: "Team Delta",
-    date: "2024-11-11",
-    time: "18:30",
-    location: "Stadium B",
-  },
-  // Add more matches as needed
-];
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/firebaseConfig";
+
+interface Match{
+  match_id: string;
+  team1: string;
+  team2: string;
+  dateTime: string;
+  ground_id: string;
+  result: string;
+  umpire_id: string;
+}
+
 
 export default function MatchDetails() {
 
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [matchesData, setMatchesData] = useState<Match[]>([]);
+  const [userData, setUserData] = useState({
+    name: "",
+    username: "",
+    password:"",
+    phone_no: 0,
+    email:"",
+    umpire_id:"",
+    experience:"",
+    matches_officiated:[] as string[],
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedUserData = await AsyncStorage.getItem("userData");
+        if (storedUserData) {
+          const parsedUserData = JSON.parse(storedUserData);
+          console.log("Fetched User Data:", parsedUserData); // Debugging
+          setUserData(parsedUserData);
+          // if(parsedUserData.matches_officiated.length > 0){
+          //   await fetchMatches(userData.matches_officiated);
+          // }
+        }
+      } catch (error) {
+        console.log("Error fetching user data:", error);
+      } 
+    };
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    if (userData.matches_officiated.length > 0) {
+      fetchMatches(userData.matches_officiated);
+    }
+  }, [userData.matches_officiated]);
+
+  const fetchMatches = async (matches_officiated: string[]) => {
+    
+    try {
+      setLoading(true);
+        const matchData: Match[] = [];
+        const matchesColllectionRef = collection(db, "match");
+
+        for (const matchId of matches_officiated) {
+            const q = query(matchesColllectionRef, where("match_id", "==", matchId));
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach((doc) => {
+                const MData = doc.data();
+                const match: Match = {
+                    match_id: MData.match_id,
+                    team1: MData.team1,
+                    team2: MData.team2,
+                    dateTime: MData.dateTime,
+                    ground_id: MData.ground_id,
+                    result: MData.result,
+                    umpire_id: MData.umpire_id,
+                };
+                matchData.push(match);
+            });
+        }
+
+        setMatchesData(matchData);
+        console.log("Matches Data:", matchData);
+    } catch (error) {
+        console.log("Error fetching matches:", error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.pageTitle}>Upcoming Matches</Text>
+      {loading? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#005B41" />
+      </View>
+      ):(<>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {matches.map((match) => (
-          <View key={match.matchId} style={styles.matchCard}>
+        {matchesData.map((match) => (
+          <View key={match.match_id} style={styles.matchCard}>
             <View style={styles.matchInfoContainer}>
-              <Image
-                source={require("@/assets/images/assign.png")}
-                style={styles.matchImage}
-              />
+              
               <View style={styles.matchDetails}>
                 <Text style={styles.matchTitle}>
-                  {match.teamA} vs {match.teamB}
+                  {match.team1} vs {match.team2}
                 </Text>
-                <Text style={styles.matchInfo}>Match ID: {match.matchId}</Text>
-                <Text style={styles.matchInfo}>Date: {match.date}</Text>
-                <Text style={styles.matchInfo}>Time: {match.time}</Text>
-                <Text style={styles.matchInfo}>Location: {match.location}</Text>
+                <Text style={styles.matchInfo}>Match ID: {match.match_id}</Text>
+                <Text style={styles.matchInfo}>Date Time: {match.dateTime}</Text>
+                <Text style={styles.matchInfo}>Location: {match.ground_id}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.startMatchButton} onPress={() => router.push("/UmpireScoring")}>
+            <TouchableOpacity style={styles.startMatchButton} onPress={() => router.push({
+    pathname: "/UmpireScoring",
+    params: { matchId: match.match_id, Team1: match.team1, Team2:match.team2 } // Pass match ID as a parameter
+  })} >
               <Text style={styles.buttonText}>Start Match</Text>
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
-
+      </>)}
       {/* Bottom Navigation */}
       <View style={styles.navbar}>
       <TouchableOpacity
@@ -70,7 +144,7 @@ export default function MatchDetails() {
           source={require("@/assets/images/home.png")}
           style={styles.navIcon}
         />
-      </TouchableOpacity> *
+      </TouchableOpacity>
 
       <View style={styles.navItem}>
         <View style={styles.highlight}>
@@ -101,24 +175,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 80,
   },
   pageTitle: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "white",
+    color: "lightgray",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30,
   },
   scrollContainer: {
     alignItems: "center",
     paddingBottom: 100,
   },
   matchCard: {
-    backgroundColor: "#005B41",
+    backgroundColor: "#1e1e1e",
     borderRadius: 20,
     marginBottom: 25,
-    padding: 15,
+    padding: 18,
     width: "95%",
     alignSelf: "center",
   },
@@ -134,6 +208,13 @@ const styles = StyleSheet.create({
   },
   matchDetails: {
     flex: 1,
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   matchTitle: {
     color: "#fff",

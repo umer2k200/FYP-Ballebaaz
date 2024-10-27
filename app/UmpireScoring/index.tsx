@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
   View,
@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons'; // Import icon for b
 
 export default function MatchDetailsScreen() {
     const router = useRouter();
+    const {matchId,Team1,Team2} =  useLocalSearchParams();
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header with back button and match title */}
@@ -19,7 +20,7 @@ export default function MatchDetailsScreen() {
         <TouchableOpacity>
           <Icon name="arrow-back" size={24} color="#fff" onPress={() => router.push("/UmpireHome")}/>
         </TouchableOpacity>
-        <Text style={styles.matchTitle}>United vs Kings</Text>
+        <Text style={styles.matchTitle}>{Team1} vs {Team2} {matchId}</Text>
       </View>
 
       {/* Match score details */}
