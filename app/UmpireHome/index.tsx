@@ -242,99 +242,6 @@ const UmpireScreen = () => {
     }
   };
 
-
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       <StatusBar barStyle="light-content" backgroundColor="#006837" />
-
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <Text style={styles.logo}>Welcome, {userData.name}</Text>
-     
-//      </View>
-
-
-
-//       {/* Upcoming Matches */}
-//       <Text style={styles.upcomingMatchesTitle}>Upcoming Matches</Text>
-//       <TouchableOpacity
-//       onPress={handleViewAllPress}
-//       >
-//         <Text style={styles.viewAll}>View all</Text>
-//       </TouchableOpacity>
-
-      
-//     <ScrollView 
-//       horizontal 
-//       showsHorizontalScrollIndicator={false} 
-//       style={styles.matchList}
-//     >
-//       {matchData.map((item) => (
-        
-//         <TouchableOpacity 
-//           key={item.dateTime} // Ensure a unique key is provided
-//           style={styles.matchCard}
-//           onPress={handleMatchPress}
-//         >
-//           <View style={styles.matchHeader}>
-//             <Image
-//               style={styles.matchImage}
-//               source={require('@/assets/images/upcomingMatchBoxpic.jpg')}
-//             />
-//             <View style={styles.matchDetails}>
-//               <Text style={styles.matchTitle}>{item.team1} VS {item.team2} </Text>
-//             </View>
-//             {/* <Text style={styles.matchParticipants}>{item.participants}</Text> */}
-//           </View>
-//           <Text style={styles.matchDate}>{item.dateTime}</Text>
-//           {/* <Text style={styles.matchLocation}>{item.location}</Text> */}
-//           {/* <Text style={styles.matchPrice}>
-//             {item.price} <Text style={styles.paymentType}>per person ({item.paymentType})</Text>
-//           </Text> */}
-//         </TouchableOpacity>
-//       ))}
-//     </ScrollView>
-    
-
-//       {/* Bottom Navigation */}
-//       <View style={styles.navbar}>
-
-
-//       <View style={styles.navItem}>
-//           <View style={styles.highlight}>
-//             <Image
-//               source={require("@/assets/images/home.png")}
-//               style={styles.navIcon}
-//             />
-//           </View>
-//         </View>
-
-//         <TouchableOpacity
-//           style={styles.navItem}
-//           onPress={() => router.push("/UmpireScoring")}
-//         >
-//           <Image
-//             source={require("@/assets/images/cric.png")}
-//             style={styles.navIcon}
-//           />
-//         </TouchableOpacity>
-
-//         <TouchableOpacity
-//           style={styles.navItem}
-//           onPress={() => router.push("/UmpireSettings")}
-//         >
-//           <Image
-//             source={require("@/assets/images/settings.png")}
-//             style={styles.navIcon}
-//           />
-//         </TouchableOpacity>
-//       </View>
-//     </SafeAreaView>
-//   );
-// };
-
-
 const renderMatchItem = ({ item }: { item: Match }) => {
   if (!item) return null;
 
@@ -398,7 +305,7 @@ return (
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push("/UmpireScoring")}
+          onPress={() => router.push('/')}
         >
           <Image
             source={require("@/assets/images/cric.png")}
