@@ -291,6 +291,11 @@ export default function CoachSettings() {
         />
       </View>
 
+      {/* View Teams Button */}
+      <TouchableOpacity style={styles.updateButton} onPress={() => router.push("/CoachViewMyTeams")}>
+        <Text style={styles.updateButtonText}>View My Teams</Text>
+      </TouchableOpacity>
+
       {/* Update Button */}
       <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
         <Text style={styles.updateButtonText}>Update Profile</Text>
