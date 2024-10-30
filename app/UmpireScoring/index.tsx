@@ -69,6 +69,9 @@ export default function MatchDetailsScreen() {
   const [currentBowler, setCurrentBowler] = useState<Player | null>(null);
   const [selectBatsmanModalVisible, setSelectBatsmanModalVisible] = useState(false);
   const [selectBowlerModalVisible, setSelectBowlerModalVisible] = useState(false);
+  const [byeRuns, setByeRuns] = useState(0);
+  const [isByeModalVisible, setByeModalVisible] = useState(false);
+  const [isWideModalVisible, setWideModalVisible] = useState(false);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -1224,6 +1227,190 @@ export default function MatchDetailsScreen() {
     }
   };
 
+  const handleWideButtonPress = () => {
+    setWideModalVisible(true);
+  };
+
+  const battingAddWideRuns = async () =>{
+    let bool2 = false;
+    try{
+      const wideRuns = byeRuns;
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      
+      //update display stats
+      battingTeam!.battingTotalRuns += (1+wideRuns);
+      battingTeam!.battingextras += (1+wideRuns);
+      bowlingTeam!.bowlingRunsConceded += (1+wideRuns);
+      bowlingTeam!.bowlingExtras += (1+wideRuns);
+      currentBowler!.bowlingRunsConceded += (1+wideRuns);
+      
+      
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else if (bowlerInTeam2) {
+          bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      setCurrentBowler({ ...currentBowler! });
+  
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+      
+      if(wideRuns%2!==0){
+        bool2 = true;
+      }
+  
+      calculateStats();
+      setBattingTeam({...battingTeam!});
+      setBowlingTeam({...bowlingTeam!});
+      
+      setWideModalVisible(false);
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      if(bool2){
+        const temp=strikerBatsman!;
+        setStrikerBatsman(nonStrikerBatsman!);
+        setNonStrikerBatsman(temp!);
+      }
+      displaySelected();
+      setByeRuns(0);
+    }
+  };
+
+  const handleByeButtonPress = () => {
+    setByeModalVisible(true);
+  };
+
+  const battingAddByeRuns = () => {
+    let bool2 = false;
+    try{
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      if (Math.round(battingTeam!.battingoversPlayed * 10) % 10 === 5) {
+        battingTeam!.battingoversPlayed = Math.floor(battingTeam!.battingoversPlayed) + 1;
+        bowlingTeam!.bowlingOvers = Math.floor(bowlingTeam!.bowlingOvers) +1;
+        currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
+        bool2=true;
+        handleOverFinished();
+      } else {
+          battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
+          bowlingTeam!.bowlingOvers = Math.round((bowlingTeam!.bowlingOvers + 0.1)* 10) /10;
+          currentBowler!.bowlingOversBowled = Math.round((currentBowler!.bowlingOversBowled + 0.1) *10 ) /10;
+      }
+      //update display stats
+      battingTeam!.battingTotalRuns += byeRuns;
+      battingTeam!.battingextras+=byeRuns;
+      bowlingTeam!.bowlingRunsConceded+=byeRuns;
+      bowlingTeam!.bowlingExtras+=byeRuns;
+      currentBowler!.bowlingRunsConceded+=byeRuns;
+      currentBowler!.bowlingBallsBowled+=1;
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else if (bowlerInTeam2) {
+          bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+      setCurrentBowler({ ...currentBowler! });
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      
+  
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+      
+      if(byeRuns%2!==0){
+        bool2 = true;
+      }
+    
+      calculateStats();
+      setBattingTeam({...battingTeam!});
+      setBowlingTeam({...bowlingTeam!});
+      
+      setByeModalVisible(false);
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      if(bool2){
+        const temp=strikerBatsman!;
+        setStrikerBatsman(nonStrikerBatsman!);
+        setNonStrikerBatsman(temp!);
+      }
+      displaySelected();
+      setByeRuns(0);
+    }
+  };
+
+  const callbattingNoBall = async () =>{
+    await battingNoBall();
+    displaySelected();
+  };
+
+  const battingNoBall = async () =>{
+    let bool2=false;
+    try{
+
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      if(bool2){
+        const temp=strikerBatsman!;
+        setStrikerBatsman(nonStrikerBatsman!);
+        setNonStrikerBatsman(temp!);
+      }
+    }
+  };
+
+  //final update DB
+  const updateAllStats = async () => {
+    setIsMatchOngoing(false);
+    
+  };
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {loading? (
@@ -1310,6 +1497,48 @@ export default function MatchDetailsScreen() {
               </View>
           </View>
       </Modal>
+
+      {/* wides modal */}
+      <Modal visible={isWideModalVisible} transparent={true} animationType="slide" onRequestClose={()=>setWideModalVisible(false)}>
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalText}>Enter Extra Wide Runs:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={byeRuns.toString()}
+            onChangeText={(text) => setByeRuns(Number(text))}
+          />
+          <TouchableOpacity onPress={battingAddWideRuns} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Add Wide Runs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setWideModalVisible(false)} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* byes modal */}
+      <Modal visible={isByeModalVisible} transparent={true} animationType="slide" onRequestClose={()=>setByeModalVisible(false)}>
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalText}>Enter Bye Runs:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={byeRuns.toString()}
+            onChangeText={(text) => setByeRuns(Number(text))}
+          />
+          <TouchableOpacity onPress={battingAddByeRuns} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Add Bye Runs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setByeModalVisible(false)} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header with back button and match title */}
       <View style={styles.header}>
         <Text style={styles.matchTitle}>
@@ -1325,7 +1554,7 @@ export default function MatchDetailsScreen() {
       <View style={styles.scoreContainer}>
         <Text style={styles.teamName}>{battingTeam?.team_name}</Text>
         <Text style={styles.scoreText}>{battingTeam?.battingTotalRuns} - {battingTeam?.battingwicketsLost}</Text>
-        <Text style={styles.oversText}>Overs: {battingTeam?.battingoversPlayed}/20 - Run rate: {battingTeam?.battingRunRate}</Text>
+        <Text style={styles.oversText}>Overs: {battingTeam?.battingoversPlayed}/20 - Run rate: {battingTeam?.battingRunRate? battingTeam?.battingRunRate: 'N/A'}</Text>
 
         {/* Batting details */}
         <View style={styles.statsHeader}>
@@ -1337,7 +1566,7 @@ export default function MatchDetailsScreen() {
           <Text style={styles.statsText}>S.R</Text>
         </View>
         <View style={styles.statsRow}>
-          <Text style={styles.batterText}>* {strikerBatsman?.name}</Text>
+          <Text style={styles.batterText}>* {strikerBatsman?.name || "Not Selected"}</Text>
           <Text style={styles.statsValue}>{strikerBatsman?.battingRunsScored || 0}</Text>
           <Text style={styles.statsValue}>{strikerBatsman?.battingBallsFaced || 0}</Text>
           <Text style={styles.statsValue}>{strikerBatsman?.battingFours || 0}</Text>
@@ -1345,7 +1574,7 @@ export default function MatchDetailsScreen() {
           <Text style={styles.statsValue}>{strikerBatsman?.battingStrikeRate || 0 }</Text>
         </View>
         <View style={styles.statsRow}>
-          <Text style={styles.batterText}>{nonStrikerBatsman?.name}</Text>
+          <Text style={styles.batterText}>{nonStrikerBatsman?.name || "Not Selected"}</Text>
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingRunsScored || 0}</Text>
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingBallsFaced || 0}</Text>
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingFours || 0}</Text>
@@ -1364,7 +1593,7 @@ export default function MatchDetailsScreen() {
           <Text style={styles.statsText}>W</Text>
         </View>
         <View style={styles.statsRow}>
-          <Text style={styles.batterText}>{currentBowler?.name}</Text>
+          <Text style={styles.batterText}>{currentBowler?.name || "Not Selected"}</Text>
           <Text style={styles.statsValue}>{currentBowler?.bowlingRunsConceded || 0}</Text>
           <Text style={styles.statsValue}>{currentBowler?.bowlingOversBowled || 0}</Text>
           <Text style={styles.statsValue}>{currentBowler?.bowlingFours || 0}</Text>
@@ -1388,9 +1617,9 @@ export default function MatchDetailsScreen() {
           <Text style={styles.gridItem} onPress={battingPlayerOut}>OUT</Text>
         </View>
         <View style={styles.gridRow}>
-          <Text style={styles.gridItem} >Bye</Text>
+          <Text style={styles.gridItem} onPress={handleByeButtonPress}>Bye</Text>
           <Text style={styles.gridItem}>NB</Text>
-          <Text style={styles.gridItem} >Wide</Text>
+          <Text style={styles.gridItem} onPress={handleWideButtonPress}>Wide</Text>
           <Text style={styles.gridItem}>DRS</Text>
         </View>
       </View>
