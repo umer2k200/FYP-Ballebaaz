@@ -146,6 +146,17 @@ export default function ClubOwnerUmpireBookings() {
         };
         await addDoc(matchCollectionRef, matchData1);
 
+        const umpireCollectionRef = collection(db, "umpire");
+        const q2 = query( umpireCollectionRef, where("umpire_id", "==", selectedUmpire.umpire_id));
+        const querySnapshot2 = await getDocs(q2);
+        if(!querySnapshot2.empty){
+          const umpireDoc = querySnapshot2.docs[0];
+          const umpireDocId = umpireDoc.id;
+          const umpireDocRef = doc(db, "umpire", umpireDocId);
+          await updateDoc(umpireDocRef, {
+            mathes_officiated: [...umpireData.mathes_officiated, matchData1.match_id],
+          });
+        }
 
 
         
