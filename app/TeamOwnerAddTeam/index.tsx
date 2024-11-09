@@ -238,7 +238,12 @@ export default function AddTeamScreen() {
         if (selectedImage) {
           imageUrl = await uploadImageToFirebase(selectedImage);
         }
-        const docRef = await addDoc(collection(db, "team"), teamData);
+        const updatedTeamData = {
+          ...teamData,
+          profile_pic: imageUrl, // set the image URL in the updatedTeamData
+          players: [teamOwnerData.player_id, ...teamData.players], // Add captain_id to players array
+        };
+        const docRef = await addDoc(collection(db, "team"), updatedTeamData);
         console.log("Document written with ID: ", docRef.id);
         await handleUpdate();
         setAlertMessage("Team added successfully!");

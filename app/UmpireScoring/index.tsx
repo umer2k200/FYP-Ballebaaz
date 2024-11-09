@@ -13,6 +13,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import CustomAlert from "@/components/CustomAlert";
 
 interface Player {
   name: string;
@@ -57,11 +58,18 @@ export default function MatchDetailsScreen() {
   const [team2, setTeam2] = useState<Team>();
   const [fetchComplete, setFetchComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
   const [team1Players, setTeam1Players] = useState<Player[]>([]);
   const [team2Players, setTeam2Players] = useState<Player[]>([]);
   const [timer, setTimer] = useState(0);
   const [isMatchOngoing, setIsMatchOngoing] = useState(true);
-  const [isModalVisible, setModalVisible] = useState(true);
+  const [isFirstInningsDone, setFirtInningsDone] = useState(false);
+  const [targetScore, setTargetScore] = useState(0);
+  const [requiredRunrate, setRequiredRunrate] = useState(0);
+  const [totalOvers, setTotalOvers] = useState(20);
+  const [isTotalOverModalVisible, setTotalOverModalVisible] = useState(true);
+  const [isModalVisible, setModalVisible] = useState(false);
   const [battingTeam, setBattingTeam] = useState<Team | null>(null);
   const [bowlingTeam, setBowlingTeam] = useState<Team | null>(null);
   const [strikerBatsman, setStrikerBatsman] = useState<Player | null>(null);
@@ -72,6 +80,11 @@ export default function MatchDetailsScreen() {
   const [byeRuns, setByeRuns] = useState(0);
   const [isByeModalVisible, setByeModalVisible] = useState(false);
   const [isWideModalVisible, setWideModalVisible] = useState(false);
+  const [isNoBallModalVisible, setNoBallModalVisible] = useState(false);
+  const [isNextInningsModalVisible, setNextInningsModalVisible] = useState(false);
+  const [isFreeHit, setFreeHit] = useState(false);
+  const [isFreeHitModalVisible, setFreeHitModalVisible] = useState(false);
+  const [freeHitStrikerScore, setFreeHitStrikerScore] = useState(0);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -149,6 +162,10 @@ export default function MatchDetailsScreen() {
     }
   }, [fetchComplete, team1, team2]);
 
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
+
   const fetchPlayersData = async (team1PlayerIds: string[],team2PlayerIds: string[]) => {
     setLoading(true);
     try{
@@ -213,13 +230,19 @@ export default function MatchDetailsScreen() {
       });
       setTeam1Players(team1Data);
       setTeam2Players(team2Data);
+      
     }catch(e){
       console.log('error:',e);
     }finally{
       setLoading(false);
     }
   };
-
+  
+  const AddTotalOvers = () => {
+     setTotalOverModalVisible(false);
+     setModalVisible(true);
+  }
+  
   const handleTeamSelection = (selectedTeam: Team) => {
     setBattingTeam(selectedTeam);
     if (selectedTeam.team_id === team1?.team_id) {
@@ -275,6 +298,20 @@ export default function MatchDetailsScreen() {
     setSelectBowlerModalVisible(true);
   };
 
+  const startNextInnings = () => {
+    
+    //hold on ok then do proceed
+    const temp = battingTeam;
+    setBattingTeam(bowlingTeam);
+    setBowlingTeam(temp);
+    setStrikerBatsman(null);
+    setNonStrikerBatsman(null);
+    setCurrentBowler(null);
+    setNextInningsModalVisible(false);
+    setSelectBatsmanModalVisible(true);
+    
+  }
+
   const calculateStats = () => {
     battingTeam!.battingRunRate = (battingTeam!.battingTotalRuns / battingTeam!.battingoversPlayed);
     battingTeam!.battingRunRate = Math.round(battingTeam!.battingRunRate * 100) / 100;
@@ -283,6 +320,9 @@ export default function MatchDetailsScreen() {
     nonStrikerBatsman!.battingStrikeRate = (nonStrikerBatsman!.battingRunsScored / nonStrikerBatsman!.battingBallsFaced) * 100;
     nonStrikerBatsman!.battingStrikeRate = Math.round(nonStrikerBatsman!.battingStrikeRate * 100) / 100;
     currentBowler!.bowlingEconomyRate = currentBowler!.bowlingOversBowled>0?(currentBowler!.bowlingRunsConceded / currentBowler!.bowlingOversBowled): 0;
+    if(isFirstInningsDone){
+      setRequiredRunrate(parseFloat(Math.round(((((battingTeam!.bowlingRunsConceded+1)-battingTeam!.battingTotalRuns)/((totalOvers) - (battingTeam!.battingoversPlayed))))).toFixed(2)));
+    }
     setBattingTeam({ ...battingTeam! });
     setStrikerBatsman({ ...strikerBatsman! });
     setNonStrikerBatsman({...nonStrikerBatsman!});
@@ -296,6 +336,9 @@ export default function MatchDetailsScreen() {
   };
   const battingAddZeroRuns = async () => {
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
       //check if exists
       if (!currentBowler) {
@@ -317,7 +360,18 @@ export default function MatchDetailsScreen() {
           strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
         }
         currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-        handleOverFinished();
+
+        if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+          boolCheckFirstInningsEnd=true;
+          setTargetScore(battingTeam!.battingTotalRuns+1);
+        }
+        else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+          boolCheckMatchEnd = true;
+        }
+        else{
+          boolCheckOverFinsihed=true;
+        }
+
         bool2=true;
       } else {
           battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -343,6 +397,11 @@ export default function MatchDetailsScreen() {
       currentBowler!.bowlingBallsBowled += 1;
       currentBowler!.bowlingFours += 0;
       currentBowler!.bowlingSixes += 0;
+      
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)&& isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
+
       setStrikerBatsman({ ...strikerBatsman! });
       setBattingTeam({ ...battingTeam! });
       setBowlingTeam({ ...bowlingTeam! });
@@ -407,6 +466,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
     
   };
@@ -418,6 +506,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddOneRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
       //check if exists
       if (!currentBowler) {
@@ -439,7 +530,18 @@ export default function MatchDetailsScreen() {
           strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
         }
         currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-        handleOverFinished();
+        
+        if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+          boolCheckFirstInningsEnd=true;
+          setTargetScore(battingTeam!.battingTotalRuns+1);
+        }
+        else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+          boolCheckMatchEnd = true;
+        }
+        else{
+          boolCheckOverFinsihed=true;
+        }
+
         bool2 = true;
       } else {
           battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -465,6 +567,9 @@ export default function MatchDetailsScreen() {
       currentBowler!.bowlingBallsBowled += 1;
       currentBowler!.bowlingFours += 0;
       currentBowler!.bowlingSixes += 0;
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
       setStrikerBatsman({ ...strikerBatsman! });
       setBattingTeam({ ...battingTeam! });
       setBowlingTeam({ ...bowlingTeam! });
@@ -528,6 +633,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
 
@@ -538,6 +672,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddTwoRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
         //check if exists
         if (!currentBowler) {
@@ -559,7 +696,16 @@ export default function MatchDetailsScreen() {
               strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
             }
           currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-          handleOverFinished();
+          if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+            boolCheckFirstInningsEnd=true;
+            setTargetScore(battingTeam!.battingTotalRuns+1);
+          }
+          else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+            boolCheckMatchEnd = true;
+          }
+          else{
+            boolCheckOverFinsihed=true;
+          }
           bool2 = true;
         } else {
             battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -585,6 +731,9 @@ export default function MatchDetailsScreen() {
         currentBowler!.bowlingBallsBowled += 1;
         currentBowler!.bowlingFours += 0;
         currentBowler!.bowlingSixes += 0;
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+          boolCheckMatchEnd = true;
+        }
         setStrikerBatsman({ ...strikerBatsman! });
         setBattingTeam({ ...battingTeam! });
         setBowlingTeam({ ...bowlingTeam! });
@@ -648,6 +797,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
 
@@ -658,6 +836,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddThreeRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
         //check if exists
         if (!currentBowler) {
@@ -679,7 +860,16 @@ export default function MatchDetailsScreen() {
               strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
             }
           currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-          handleOverFinished();
+          if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+            boolCheckFirstInningsEnd=true;
+            setTargetScore(battingTeam!.battingTotalRuns+1);
+          }
+          else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+            boolCheckMatchEnd = true;
+          }
+          else{
+            boolCheckOverFinsihed=true;
+          }
           bool2 = true;
         } else {
             battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -705,6 +895,9 @@ export default function MatchDetailsScreen() {
         currentBowler!.bowlingBallsBowled += 1;
         currentBowler!.bowlingFours += 0;
         currentBowler!.bowlingSixes += 0;
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)&& isFirstInningsDone){
+          boolCheckMatchEnd = true;
+        }
         setStrikerBatsman({ ...strikerBatsman! });
         setBattingTeam({ ...battingTeam! });
         setBowlingTeam({ ...bowlingTeam! });
@@ -768,6 +961,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
 
@@ -778,6 +1000,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddFourRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
         //check if exists
         if (!currentBowler) {
@@ -799,7 +1024,16 @@ export default function MatchDetailsScreen() {
               strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
             }
           currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-          handleOverFinished();
+          if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+            boolCheckFirstInningsEnd=true;
+            setTargetScore(battingTeam!.battingTotalRuns+1);
+          }
+          else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+            boolCheckMatchEnd = true;
+          }
+          else{
+            boolCheckOverFinsihed=true;
+          }
           bool2 = true;
         } else {
             battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -825,6 +1059,9 @@ export default function MatchDetailsScreen() {
         currentBowler!.bowlingBallsBowled += 1;
         currentBowler!.bowlingFours += 1;
         currentBowler!.bowlingSixes += 0;
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)&& isFirstInningsDone){
+          boolCheckMatchEnd = true;
+        }
         setStrikerBatsman({ ...strikerBatsman! });
         setBattingTeam({ ...battingTeam! });
         setBowlingTeam({ ...bowlingTeam! });
@@ -888,6 +1125,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
   
@@ -898,6 +1164,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddFiveRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
         //check if exists
         if (!currentBowler) {
@@ -919,7 +1188,17 @@ export default function MatchDetailsScreen() {
               strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
             }
           currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-          handleOverFinished();
+          if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+            boolCheckFirstInningsEnd=true;
+            setTargetScore(battingTeam!.battingTotalRuns+1);
+          }
+          else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+            boolCheckMatchEnd = true;
+          }
+          else{
+            boolCheckOverFinsihed=true;
+          }
+  
           bool2 = true;
         } else {
             battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -945,6 +1224,9 @@ export default function MatchDetailsScreen() {
         currentBowler!.bowlingBallsBowled += 1;
         currentBowler!.bowlingFours += 0;
         currentBowler!.bowlingSixes += 0;
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)&& isFirstInningsDone){
+          boolCheckMatchEnd = true;
+        }
         setStrikerBatsman({ ...strikerBatsman! });
         setBattingTeam({ ...battingTeam! });
         setBowlingTeam({ ...bowlingTeam! });
@@ -1008,6 +1290,35 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
 
@@ -1018,6 +1329,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddSixRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
         //check if exists
         if (!currentBowler) {
@@ -1039,7 +1353,16 @@ export default function MatchDetailsScreen() {
               strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
             }
           currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
-          handleOverFinished();
+          if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+            boolCheckFirstInningsEnd=true;
+            setTargetScore(battingTeam!.battingTotalRuns+1);
+          }
+          else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+            boolCheckMatchEnd = true;
+          }
+          else{
+            boolCheckOverFinsihed=true;
+          }
           bool2 = true;
         } else {
             battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
@@ -1065,6 +1388,9 @@ export default function MatchDetailsScreen() {
         currentBowler!.bowlingBallsBowled += 1;
         currentBowler!.bowlingFours += 0;
         currentBowler!.bowlingSixes += 1 ;
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+          boolCheckMatchEnd = true;
+        }
         setStrikerBatsman({ ...strikerBatsman! });
         setBattingTeam({ ...battingTeam! });
         setBowlingTeam({ ...bowlingTeam! });
@@ -1128,14 +1454,51 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
     }
   };
 
   const  battingPlayerOut = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
-      if (battingTeam!.battingwicketsLost === (battingTeam!.players.length - 1)) {
-        Alert.alert("Match Ends: All players are out!");
+      if( isFreeHit === true){
+        setFreeHitModalVisible(true);
+        return;
+      }
+      if (battingTeam!.battingwicketsLost === (battingTeam!.players.length - 2)) {
+        setAlertMessage("Match Ends: All players are out!");
+        setAlertVisible(true);
         // You can also add logic here to handle the end of the match, if necessary.
         return;
       }
@@ -1150,8 +1513,18 @@ export default function MatchDetailsScreen() {
             strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
           }
         currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
+
+        if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+          boolCheckFirstInningsEnd=true;
+          setTargetScore(battingTeam!.battingTotalRuns+1);
+        }
+        else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+          boolCheckMatchEnd = true;
+        }
+        else{
+          boolCheckOverFinsihed=true;
+        }
         bool2=true;
-        handleOverFinished();
       } else {
           battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
           bowlingTeam!.bowlingOvers = Math.round((bowlingTeam!.bowlingOvers + 0.1)* 10) /10;
@@ -1213,8 +1586,9 @@ export default function MatchDetailsScreen() {
       } else if (bowlingTeam?.team_id === team2?.team_id) {
           setTeam2({ ...bowlingTeam! });
       }
-  
-      handlePlayerOut();    
+      
+      handlePlayerOut();
+
       calculateStats();
     }catch(e){
       console.log('error:',e);
@@ -1223,6 +1597,32 @@ export default function MatchDetailsScreen() {
         const temp=strikerBatsman!;
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
       }
     }
   };
@@ -1233,6 +1633,9 @@ export default function MatchDetailsScreen() {
 
   const battingAddWideRuns = async () =>{
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
       const wideRuns = byeRuns;
       //check if exists
@@ -1262,6 +1665,10 @@ export default function MatchDetailsScreen() {
           bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
       } else {
           console.warn("Bowler not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
       }
       setTeam1Players([...team1Players]);
       setTeam2Players([...team2Players]);
@@ -1297,6 +1704,29 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
       displaySelected();
       setByeRuns(0);
     }
@@ -1305,9 +1735,14 @@ export default function MatchDetailsScreen() {
   const handleByeButtonPress = () => {
     setByeModalVisible(true);
   };
+  
+
 
   const battingAddByeRuns = () => {
     let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
       //check if exists
       if (!currentBowler) {
@@ -1322,8 +1757,19 @@ export default function MatchDetailsScreen() {
         battingTeam!.battingoversPlayed = Math.floor(battingTeam!.battingoversPlayed) + 1;
         bowlingTeam!.bowlingOvers = Math.floor(bowlingTeam!.bowlingOvers) +1;
         currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
+        
+        if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+          boolCheckFirstInningsEnd=true;
+          setTargetScore(battingTeam!.battingTotalRuns+1);
+        }
+        else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+          boolCheckMatchEnd = true;
+        }
+        else{
+          boolCheckOverFinsihed=true;
+        }
+
         bool2=true;
-        handleOverFinished();
       } else {
           battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
           bowlingTeam!.bowlingOvers = Math.round((bowlingTeam!.bowlingOvers + 0.1)* 10) /10;
@@ -1345,6 +1791,10 @@ export default function MatchDetailsScreen() {
           bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
       } else {
           console.warn("Bowler not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
       }
       setCurrentBowler({ ...currentBowler! });
       setTeam1Players([...team1Players]);
@@ -1381,30 +1831,534 @@ export default function MatchDetailsScreen() {
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(isFreeHit===true){
+        setFreeHit(false);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
       displaySelected();
       setByeRuns(0);
     }
   };
 
-  const callbattingNoBall = async () =>{
-    await battingNoBall();
-    displaySelected();
-  };
-
-  const battingNoBall = async () =>{
-    let bool2=false;
+  const callNoBallFour = async() => {
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
     try{
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      //update display stats
+      battingTeam!.battingTotalRuns += (1+4);
+      battingTeam!.battingextras += 1;
+      bowlingTeam!.bowlingRunsConceded += (1+4);
+      bowlingTeam!.bowlingExtras += 1;
+      currentBowler!.bowlingFours += 1;
+      currentBowler!.bowlingRunsConceded += (1+4);
+      strikerBatsman!.battingFours += 1;
+      strikerBatsman!.battingRunsScored += 4; 
 
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+        bowlerInTeam1.bowlingFours = currentBowler.bowlingFours;
+        bowlerInTeam1.bowlingSixes = currentBowler.bowlingSixes;
+      } else if (bowlerInTeam2) {
+          bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+          bowlerInTeam2.bowlingFours = currentBowler.bowlingFours;
+          bowlerInTeam2.bowlingSixes = currentBowler.bowlingSixes;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+
+      const batsmanInTeam1 = team1Players.find(p => p.player_id === strikerBatsman.player_id);
+      const batsmanInTeam2 = team2Players.find(p => p.player_id === strikerBatsman.player_id);
+      if (batsmanInTeam1) {
+        batsmanInTeam1.battingRunsScored = strikerBatsman.battingRunsScored;
+        batsmanInTeam1.battingFours = strikerBatsman.battingFours;
+        batsmanInTeam1.battingSixes = strikerBatsman.battingSixes;
+      } else if (batsmanInTeam2) {
+          batsmanInTeam2.battingRunsScored = strikerBatsman.battingRunsScored;
+          batsmanInTeam2.battingFours = strikerBatsman.battingFours;
+          batsmanInTeam2.battingSixes = strikerBatsman.battingSixes;
+      } else {
+          console.warn("Batsman not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
+      setCurrentBowler({ ...currentBowler! });
+      setStrikerBatsman({ ...strikerBatsman! });
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      
+  
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+    
+      calculateStats();
+      setBattingTeam({...battingTeam!});
+      setBowlingTeam({...bowlingTeam!});
+      
+      setNoBallModalVisible(false);
     }catch(e){
       console.log('error:',e);
     }finally{
-      if(bool2){
+      displaySelected();
+      setByeRuns(0);
+      setFreeHit(true);
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
+    }
+  }
+
+  const callNoBallSix = async() => {
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
+    try{
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      //update display stats
+        battingTeam!.battingTotalRuns += (1+6);
+        battingTeam!.battingextras += 1;
+        bowlingTeam!.bowlingRunsConceded += (1+6);
+        bowlingTeam!.bowlingExtras += 1;
+        currentBowler!.bowlingSixes += 1;
+        currentBowler!.bowlingRunsConceded += (1+6);
+        strikerBatsman!.battingSixes += 1;
+        strikerBatsman!.battingRunsScored += 6; 
+
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+        bowlerInTeam1.bowlingFours = currentBowler.bowlingFours;
+        bowlerInTeam1.bowlingSixes = currentBowler.bowlingSixes;
+      } else if (bowlerInTeam2) {
+          bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+          bowlerInTeam2.bowlingFours = currentBowler.bowlingFours;
+          bowlerInTeam2.bowlingSixes = currentBowler.bowlingSixes;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+
+      const batsmanInTeam1 = team1Players.find(p => p.player_id === strikerBatsman.player_id);
+      const batsmanInTeam2 = team2Players.find(p => p.player_id === strikerBatsman.player_id);
+      if (batsmanInTeam1) {
+        batsmanInTeam1.battingRunsScored = strikerBatsman.battingRunsScored;
+        batsmanInTeam1.battingFours = strikerBatsman.battingFours;
+        batsmanInTeam1.battingSixes = strikerBatsman.battingSixes;
+      } else if (batsmanInTeam2) {
+          batsmanInTeam2.battingRunsScored = strikerBatsman.battingRunsScored;
+          batsmanInTeam2.battingFours = strikerBatsman.battingFours;
+          batsmanInTeam2.battingSixes = strikerBatsman.battingSixes;
+      } else {
+          console.warn("Batsman not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
+      setCurrentBowler({ ...currentBowler! });
+      setStrikerBatsman({ ...strikerBatsman! });
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      
+  
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+    
+      calculateStats();
+      setBattingTeam({...battingTeam!});
+      setBowlingTeam({...bowlingTeam!});
+      
+      setNoBallModalVisible(false);
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      displaySelected();
+      setByeRuns(0);
+      setFreeHit(true);
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
+      
+    }
+  }
+
+  const handleNoBallButtonPress = () => {
+    setNoBallModalVisible(true);
+  };
+
+  const battingNoBall = async () =>{
+    let bool = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
+    try{
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      //update display stats
+      battingTeam!.battingTotalRuns += (1+byeRuns);
+      battingTeam!.battingextras+=1;
+      bowlingTeam!.bowlingRunsConceded+=(1+byeRuns);
+      bowlingTeam!.bowlingExtras+=1;
+      currentBowler!.bowlingRunsConceded+=(1+byeRuns);
+      strikerBatsman!.battingRunsScored += byeRuns;
+
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else if (bowlerInTeam2) {
+        bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+      const batsmanInTeam1 = team1Players.find(p => p.player_id === strikerBatsman.player_id);
+      const batsmanInTeam2 = team2Players.find(p => p.player_id === strikerBatsman.player_id);
+      if (batsmanInTeam1) {
+        batsmanInTeam1.battingRunsScored = strikerBatsman.battingRunsScored;
+      } else if (batsmanInTeam2) {
+        batsmanInTeam2.battingRunsScored = strikerBatsman.battingRunsScored; 
+      } else {
+          console.warn("Batsman not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
+      setCurrentBowler({ ...currentBowler! });
+      setStrikerBatsman({ ...strikerBatsman! });
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+      
+      if(byeRuns%2!==0){
+        bool = true;
+      }
+    
+      calculateStats();
+      setBattingTeam({...battingTeam!});
+      setBowlingTeam({...bowlingTeam!});
+      
+      setNoBallModalVisible(false);
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      if(bool){
         const temp=strikerBatsman!;
         setStrikerBatsman(nonStrikerBatsman!);
         setNonStrikerBatsman(temp!);
       }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
+      displaySelected();
+      setByeRuns(0);
+      setFreeHit(true);
     }
   };
+
+  const battingAddFreeHitOutScore = async () => {
+    let bool2 = false;
+    let boolCheckOverFinsihed = false;
+    let boolCheckFirstInningsEnd = false;
+    let boolCheckMatchEnd = false;
+    try{
+      //check if exists
+      if (!currentBowler) {
+        alert("Error: No bowler selected.");
+        return;
+      }
+      if (!strikerBatsman) {
+          alert("Error: No batsman selected.");
+          return;
+      }
+      //check if over is finished or ball is bowled
+      if (Math.round(battingTeam!.battingoversPlayed * 10) % 10 === 5) {
+        battingTeam!.battingoversPlayed = Math.floor(battingTeam!.battingoversPlayed) + 1;
+        bowlingTeam!.bowlingOvers = Math.floor(bowlingTeam!.bowlingOvers) + 1;
+        if(Math.round(strikerBatsman!.battingoversPlayed* 10) %10 ===5){
+          strikerBatsman!.battingoversPlayed = Math.floor(strikerBatsman!.battingoversPlayed) + 1;
+        }
+        else{
+          strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
+        }
+        currentBowler!.bowlingOversBowled = Math.floor(currentBowler!.bowlingOversBowled) + 1;
+        
+        if (battingTeam!.battingoversPlayed >= totalOvers && !isFirstInningsDone) {
+          boolCheckFirstInningsEnd=true;
+          setTargetScore(battingTeam!.battingTotalRuns+1);
+        }
+        else if (battingTeam!.battingoversPlayed >= totalOvers && isFirstInningsDone) {
+          boolCheckMatchEnd = true;
+        }
+        else{
+          boolCheckOverFinsihed=true;
+        }
+
+        if(freeHitStrikerScore===0){
+          bool2=true;
+        }
+        else if(freeHitStrikerScore%2===0){
+          bool2=true;
+        }
+      } else {
+          battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
+          bowlingTeam!.bowlingOvers = Math.round((bowlingTeam!.bowlingOvers + 0.1) * 10) / 10;
+          if(Math.round(strikerBatsman!.battingoversPlayed* 10) %10 ===5){
+            strikerBatsman!.battingoversPlayed = Math.floor(strikerBatsman!.battingoversPlayed) + 1;
+          }
+          else{
+            strikerBatsman!.battingoversPlayed = Math.round((strikerBatsman!.battingoversPlayed + 0.1) * 10) / 10;
+          }
+          currentBowler!.bowlingOversBowled = Math.round((currentBowler!.bowlingOversBowled + 0.1) * 10) / 10;
+      }
+      //update display stats
+      battingTeam!.battingTotalRuns += freeHitStrikerScore+byeRuns;
+      battingTeam!.battingextras += byeRuns;
+      bowlingTeam!.bowlingRunsConceded += freeHitStrikerScore+byeRuns;
+      bowlingTeam!.bowlingExtras += byeRuns;
+      strikerBatsman!.battingRunsScored += freeHitStrikerScore;
+      strikerBatsman!.battingBallsFaced += 1;
+      currentBowler!.bowlingRunsConceded += freeHitStrikerScore+byeRuns;
+      currentBowler!.bowlingBallsBowled += 1;
+      
+      //update local stats
+      const bowlerInTeam1 = team1Players.find(p => p.player_id === currentBowler.player_id);
+      const bowlerInTeam2 = team2Players.find(p => p.player_id === currentBowler.player_id);
+      const batsmanInTeam1 = team1Players.find(p => p.player_id === strikerBatsman.player_id);
+      const batsmanInTeam2 = team2Players.find(p => p.player_id === strikerBatsman.player_id);
+      if (bowlerInTeam1) {
+        bowlerInTeam1.bowlingOversBowled = currentBowler.bowlingOversBowled;
+        bowlerInTeam1.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+        bowlerInTeam1.bowlingBallsBowled = currentBowler.bowlingBallsBowled;
+      } else if (bowlerInTeam2) {
+          bowlerInTeam2.bowlingOversBowled = currentBowler.bowlingOversBowled;
+          bowlerInTeam2.bowlingRunsConceded = currentBowler.bowlingRunsConceded;
+          bowlerInTeam2.bowlingBallsBowled = currentBowler.bowlingBallsBowled;
+      } else {
+          console.warn("Bowler not found in either team.");
+      }
+      if (batsmanInTeam1) {
+        batsmanInTeam1.battingRunsScored = strikerBatsman.battingRunsScored;
+        batsmanInTeam1.battingBallsFaced = strikerBatsman.battingBallsFaced;
+        batsmanInTeam1.battingoversPlayed = strikerBatsman.battingoversPlayed;
+      } else if (batsmanInTeam2) {
+          batsmanInTeam2.battingRunsScored = strikerBatsman.battingRunsScored;
+          batsmanInTeam2.battingBallsFaced = strikerBatsman.battingBallsFaced;
+          batsmanInTeam2.battingoversPlayed = strikerBatsman.battingoversPlayed;
+      } else {
+          console.warn("Batsman not found in either team.");
+      }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
+      setStrikerBatsman({ ...strikerBatsman! });
+      setBattingTeam({ ...battingTeam! });
+      setBowlingTeam({ ...bowlingTeam! });
+      setCurrentBowler({ ...currentBowler! });
+      setTeam1Players([...team1Players]);
+      setTeam2Players([...team2Players]);
+      if (battingTeam?.team_id === team1?.team_id) {
+        setTeam1({ ...battingTeam! });
+      } else if (battingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...battingTeam! });
+      }
+      if (bowlingTeam?.team_id === team1?.team_id) {
+          setTeam1({ ...bowlingTeam! });
+      } else if (bowlingTeam?.team_id === team2?.team_id) {
+          setTeam2({ ...bowlingTeam! });
+      }
+
+      calculateStats();
+      setBattingTeam({ ...battingTeam! });
+      setFreeHitModalVisible(false);
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      if(!bool2){
+        const temp=strikerBatsman!;
+        setStrikerBatsman(nonStrikerBatsman!);
+        setNonStrikerBatsman(temp!);
+      }
+      if(boolCheckOverFinsihed){
+        handleOverFinished();
+      }
+      if(boolCheckFirstInningsEnd){
+        setFirtInningsDone(true);
+        setTargetScore(battingTeam!.battingTotalRuns+1);
+        let target = battingTeam!.battingTotalRuns;
+        target+=1;
+        setTargetScore(target);
+        setNextInningsModalVisible(true);
+      }
+      if(boolCheckMatchEnd){
+        setIsMatchOngoing(false);
+        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
+          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
+          setAlertVisible(true);
+        }
+        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
+          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
+          setAlertVisible(true);
+        }
+        else{
+          setAlertMessage("Match is a tie.");
+          setAlertVisible(true);
+        }
+      }
+      setByeRuns(0);
+      setFreeHitStrikerScore(0);
+      setFreeHit(false);
+      displaySelected();
+
+    }
+    
+  }
 
   //final update DB
   const updateAllStats = async () => {
@@ -1418,6 +2372,25 @@ export default function MatchDetailsScreen() {
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ):(<>
+      {/* Total Over Selection modal */}
+      <Modal visible={isTotalOverModalVisible} transparent={true} animationType="slide" onRequestClose={()=>setTotalOverModalVisible(false)}>
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalText}>Enter total overs:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={totalOvers.toString()}
+            onChangeText={(text) => setTotalOvers(Number(text))}
+          />
+          <TouchableOpacity onPress={AddTotalOvers} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Done</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setTotalOverModalVisible(false)} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {/* Select Batsman Modal */}
       <Modal
         visible={isModalVisible}
@@ -1539,6 +2512,71 @@ export default function MatchDetailsScreen() {
         </View>
       </Modal>
 
+      {/* no ball modal */}
+      <Modal visible={isNoBallModalVisible} transparent={true} animationType="slide" onRequestClose={()=>setNoBallModalVisible(false)}>
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalText}>Enter extra runs on No ball:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={byeRuns.toString()}
+            onChangeText={(text) => setByeRuns(Number(text))}
+          />
+          <TouchableOpacity onPress={() =>battingNoBall()} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Add Runs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() =>callNoBallFour()} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Hit 4</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() =>callNoBallSix()} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Hit 6</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setNoBallModalVisible(false)} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Free hit on out modal */}
+      <Modal visible={isFreeHitModalVisible} transparent={true} animationType="slide" onRequestClose={()=>setFreeHitModalVisible(false)}>
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalText}>Enter runs scored by Batsman:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={freeHitStrikerScore.toString()}
+            onChangeText={(text) => setFreeHitStrikerScore(Number(text))}
+          />
+          <Text style={styles.modalText}>Overthrow/Byes:</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={byeRuns.toString()}
+            onChangeText={(text) => setByeRuns(Number(text))}
+          />
+          <TouchableOpacity onPress={() =>battingAddFreeHitOutScore()} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Add Runs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setFreeHitModalVisible(false)} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Next Innings modal */}
+      <Modal visible={isNextInningsModalVisible} transparent={true} animationType="slide" >
+        <View style={styles.modalContainer}><View style={styles.modalContent}>
+          <Text style={styles.modalTextBold}>First Innings Complete</Text>
+          <Text style={styles.modalText}><Text style={styles.modalTextBold}>Target: </Text>{targetScore}</Text>
+          <TouchableOpacity onPress={startNextInnings} style={styles.modalButton}>
+            <Text style={styles.buttonText}>Start Next Innings</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header with back button and match title */}
       <View style={styles.header}>
         <Text style={styles.matchTitle}>
@@ -1554,8 +2592,10 @@ export default function MatchDetailsScreen() {
       <View style={styles.scoreContainer}>
         <Text style={styles.teamName}>{battingTeam?.team_name}</Text>
         <Text style={styles.scoreText}>{battingTeam?.battingTotalRuns} - {battingTeam?.battingwicketsLost}</Text>
-        <Text style={styles.oversText}>Overs: {battingTeam?.battingoversPlayed}/20 - Run rate: {battingTeam?.battingRunRate? battingTeam?.battingRunRate: 'N/A'}</Text>
-
+        <Text style={styles.oversText}>Overs: {battingTeam?.battingoversPlayed}/{totalOvers} - Run rate: {battingTeam?.battingRunRate? battingTeam?.battingRunRate: 'N/A'}</Text>
+        {isFreeHit? 
+        (<Text style={styles.oversTextFreeHit}>- FREE HIT -</Text>):(isFirstInningsDone? (<Text style={styles.oversText}>Target: {targetScore} - Required RR: {(totalOvers-battingTeam!.battingoversPlayed)? requiredRunrate: 'N/A'}</Text>):(<></>))}
+        
         {/* Batting details */}
         <View style={styles.statsHeader}>
           <Text style={styles.statsText}>Batter</Text>
@@ -1571,7 +2611,7 @@ export default function MatchDetailsScreen() {
           <Text style={styles.statsValue}>{strikerBatsman?.battingBallsFaced || 0}</Text>
           <Text style={styles.statsValue}>{strikerBatsman?.battingFours || 0}</Text>
           <Text style={styles.statsValue}>{strikerBatsman?.battingSixes || 0}</Text>
-          <Text style={styles.statsValue}>{strikerBatsman?.battingStrikeRate || 0 }</Text>
+          <Text style={styles.statsValue}>{strikerBatsman?.battingBallsFaced!==0? strikerBatsman?.battingStrikeRate : 'N/A' }</Text>
         </View>
         <View style={styles.statsRow}>
           <Text style={styles.batterText}>{nonStrikerBatsman?.name || "Not Selected"}</Text>
@@ -1579,7 +2619,7 @@ export default function MatchDetailsScreen() {
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingBallsFaced || 0}</Text>
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingFours || 0}</Text>
           <Text style={styles.statsValue}>{nonStrikerBatsman?.battingSixes || 0}</Text>
-          <Text style={styles.statsValue}>{nonStrikerBatsman?.battingStrikeRate || 0 }</Text>
+          <Text style={styles.statsValue}>{nonStrikerBatsman?.battingBallsFaced!==0? nonStrikerBatsman?.battingStrikeRate : 'N/A' }</Text>
         </View>
 
         {/* Bowling details */}
@@ -1618,7 +2658,7 @@ export default function MatchDetailsScreen() {
         </View>
         <View style={styles.gridRow}>
           <Text style={styles.gridItem} onPress={handleByeButtonPress}>Bye</Text>
-          <Text style={styles.gridItem}>NB</Text>
+          <Text style={styles.gridItem} onPress={handleNoBallButtonPress}>NB</Text>
           <Text style={styles.gridItem} onPress={handleWideButtonPress}>Wide</Text>
           <Text style={styles.gridItem}>DRS</Text>
         </View>
@@ -1634,6 +2674,12 @@ export default function MatchDetailsScreen() {
         </TouchableOpacity>
       </View>
       </>)}
+      <CustomAlert
+        visible={alertVisible}
+        message={alertMessage}
+        onConfirm={handleAlertConfirm}
+        onCancel={handleAlertConfirm}
+      />
     </ScrollView>
   );
 }
@@ -1669,6 +2715,12 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 18,
     color:'lightgray',
+    marginBottom: 20,
+  },
+  modalTextBold: {
+    fontSize: 18,
+    color:'lightgray',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   modalButton: {
@@ -1728,6 +2780,13 @@ const styles = StyleSheet.create({
   oversText: {
     fontSize: 14,
     color: "#ccc",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  oversTextFreeHit: {
+    fontSize: 14,
+    color: "red",
+    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
   },
