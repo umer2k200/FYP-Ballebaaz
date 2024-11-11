@@ -1,6 +1,6 @@
 import { db } from "@/firebaseConfig";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +10,6 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import CustomAlert from "@/components/CustomAlert";
@@ -54,6 +53,7 @@ interface Team {
 
 export default function MatchDetailsScreen() {
   const { matchId, Team1, Team2 } = useLocalSearchParams();
+  const router = useRouter();
   const [team1, setTeam1] = useState<Team>();
   const [team2, setTeam2] = useState<Team>();
   const [fetchComplete, setFetchComplete] = useState(false);
@@ -482,18 +482,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
     
@@ -649,18 +637,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -813,18 +789,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -977,18 +941,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -1141,18 +1093,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -1306,18 +1246,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -1470,18 +1398,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -1497,10 +1413,19 @@ export default function MatchDetailsScreen() {
         return;
       }
       if (battingTeam!.battingwicketsLost === (battingTeam!.players.length - 2)) {
-        setAlertMessage("Match Ends: All players are out!");
-        setAlertVisible(true);
-        // You can also add logic here to handle the end of the match, if necessary.
-        return;
+        if(!isFirstInningsDone){
+          //first innings going
+          boolCheckFirstInningsEnd = true;
+          // setAlertMessage("All Out! First Innings Done.");
+          // setAlertVisible(true);
+        }
+        else{
+          //second innings going
+          boolCheckMatchEnd= true;
+          // setAlertMessage("All Out! Second Innings Done.");
+          // setAlertVisible(true);  
+
+        }
       }
       if (Math.round(battingTeam!.battingoversPlayed * 10) % 10 === 5) {
   
@@ -1522,9 +1447,9 @@ export default function MatchDetailsScreen() {
           boolCheckMatchEnd = true;
         }
         else{
-          boolCheckOverFinsihed=true;
+          //boolCheckOverFinsihed=true;
         }
-        bool2=true;
+        //bool2=true;
       } else {
           battingTeam!.battingoversPlayed = Math.round((battingTeam!.battingoversPlayed + 0.1) * 10) / 10;
           bowlingTeam!.bowlingOvers = Math.round((bowlingTeam!.bowlingOvers + 0.1)* 10) /10;
@@ -1569,6 +1494,10 @@ export default function MatchDetailsScreen() {
       } else {
           console.warn("Batsman not found in either team.");
       }
+
+      if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1) && isFirstInningsDone){
+        boolCheckMatchEnd = true;
+      }
       setStrikerBatsman({...strikerBatsman!});
       setCurrentBowler({...currentBowler!});
       setTeam1Players([...team1Players]);
@@ -1586,7 +1515,12 @@ export default function MatchDetailsScreen() {
       } else if (bowlingTeam?.team_id === team2?.team_id) {
           setTeam2({ ...bowlingTeam! });
       }
-      
+      if(!boolCheckFirstInningsEnd){
+        handlePlayerOut();
+      }
+      if(!boolCheckMatchEnd){
+        handlePlayerOut();
+      }
       handlePlayerOut();
 
       calculateStats();
@@ -1611,18 +1545,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   };
@@ -1714,18 +1636,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
       displaySelected();
       setByeRuns(0);
@@ -1847,18 +1757,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
       displaySelected();
       setByeRuns(0);
@@ -1960,18 +1858,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
     }
   }
@@ -2071,18 +1957,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
       
     }
@@ -2182,18 +2056,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
       displaySelected();
       setByeRuns(0);
@@ -2338,18 +2200,6 @@ export default function MatchDetailsScreen() {
       }
       if(boolCheckMatchEnd){
         setIsMatchOngoing(false);
-        if(battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)){
-          setAlertMessage(battingTeam?.team_name + " won the match by " + (battingTeam!.players.length-battingTeam!.battingwicketsLost-1) + " wickets.");
-          setAlertVisible(true);
-        }
-        else if(battingTeam!.battingTotalRuns<battingTeam!.bowlingRunsConceded){
-          setAlertMessage(bowlingTeam?.team_name + " won the match by " + (battingTeam!.bowlingRunsConceded-battingTeam!.battingTotalRuns) + " runs.");
-          setAlertVisible(true);
-        }
-        else{
-          setAlertMessage("Match is a tie.");
-          setAlertVisible(true);
-        }
       }
       setByeRuns(0);
       setFreeHitStrikerScore(0);
@@ -2362,8 +2212,144 @@ export default function MatchDetailsScreen() {
 
   //final update DB
   const updateAllStats = async () => {
-    setIsMatchOngoing(false);
-    
+    setIsMatchOngoing(true);
+    try{
+      setLoading(true);
+      //check who won match and lost
+      const winner = battingTeam!.battingTotalRuns>=(battingTeam!.bowlingRunsConceded+1)? battingTeam: bowlingTeam;
+      const loser = battingTeam!.battingTotalRuns<(battingTeam!.bowlingRunsConceded+1)? battingTeam: bowlingTeam;
+      //update the teams data in the db
+      const teamCollectionRef = collection(db, "team");
+      const team1UpdateQuery = query(teamCollectionRef, where("team_id", "==", team1?.team_id));
+      const team2UpdateQuery = query(teamCollectionRef, where("team_id", "==", team2?.team_id));
+      const team1UpdateSnapshot = await getDocs(team1UpdateQuery);
+      const team2UpdateSnapshot = await getDocs(team2UpdateQuery);
+      if(!team1UpdateSnapshot.empty && !team2UpdateSnapshot.empty){
+        const team1Doc = team1UpdateSnapshot.docs[0];
+        const team2Doc = team2UpdateSnapshot.docs[0];
+        const team1DocId = team1Doc.id;
+        const team2DocId = team2Doc.id;
+        const team1Data = team1Doc.data();
+        const team2Data = team2Doc.data();
+        const team1DocRef = doc(db,"team",team1DocId);
+        const team2DocRef = doc(db,"team",team2DocId);
+        //update highest_score,matches_lost,matches_played,matches_won, wl_ratio including % sign
+        await updateDoc(team1DocRef, {
+          highest_score: String(Math.max(Number(team1!.battingTotalRuns), Number(team1Data.highest_score))),
+          matches_lost: String(Number(team1Data.matches_lost) + (loser?.team_id === team1?.team_id ? 1 : 0)),
+          matches_won: String(Number(team1Data.matches_won) + (winner?.team_id === team1?.team_id ? 1 : 0)),
+          matches_played: String(Number(team1Data.matches_played) + 1),
+          wl_ratio: team1Data.matches_lost > 0 ? 
+            `${((Number(team1Data.matches_won) / Number(team1Data.matches_lost)) * 100).toFixed(2)} %` : 
+            "100.00 %",
+        });
+        
+        await updateDoc(team2DocRef, {
+          highest_score: String(Math.max(Number(team2!.battingTotalRuns), Number(team2Data.highest_score))),
+          matches_lost: String(Number(team2Data.matches_lost) + (loser?.team_id === team2?.team_id ? 1 : 0)),
+          matches_won: String(Number(team2Data.matches_won) + (winner?.team_id === team2?.team_id ? 1 : 0)),
+          matches_played: String(Number(team2Data.matches_played) + 1),
+          wl_ratio: team2Data.matches_lost > 0 ? 
+            `${((Number(team2Data.matches_won) / Number(team2Data.matches_lost)) * 100).toFixed(2)} %` : 
+            "100.00 %",
+        });
+      }
+      //update each player from teams array
+      const playerCollectionRef = collection(db, "player");
+
+      for(let i=0; i<team1Players.length; i++){
+        const player = team1Players[i];
+        const playerUpdateQuery = query(playerCollectionRef, where("player_id", "==", player.player_id));
+        const playerUpdateSnapshot = await getDocs(playerUpdateQuery);
+        if(!playerUpdateSnapshot.empty){
+          const playerDoc = playerUpdateSnapshot.docs[0];
+          const playerDocId = playerDoc.id;
+          const playerData = playerDoc.data();
+          const playerDocRef = doc(db,"player",playerDocId);
+          
+          const [bestWickets,bestRuns] = playerData.best_bowling? playerData.best_bowling.split("/").map(Number):[0,Infinity];
+          const currentWickets = Number(player.bowlingWicketsTaken);
+          const currentRuns = Number(player.bowlingRunsConceded);
+          const isNewBestBowling = currentWickets>bestWickets || (currentWickets===bestWickets && currentRuns<bestRuns);
+          await updateDoc(playerDocRef, {
+            
+            ballsBowled: playerData.ballsBowled+player.bowlingBallsBowled,
+            ballsFaced: playerData.ballsFaced+player.battingBallsFaced,
+            battingAverage: (playerData.noOfTimesOut + (player.battingOut ? 1 : 0))>0?(((playerData.runsScored+player.battingRunsScored)/(playerData.noOfTimesOut + (player.battingOut ? 1 : 0)))).toFixed(2):"0.00",
+            battingStrikeRate: player.battingStrikeRate,
+            best_bowling: isNewBestBowling?`${currentWickets}/${currentRuns}`:playerData.best_bowling,
+            bowlingAverage: (playerData.wicketsTaken + player.bowlingWicketsTaken)>0?((playerData.runsConceded + player.bowlingRunsConceded)/(playerData.wicketsTaken + player.bowlingWicketsTaken)).toFixed(2):"0.00",
+            bowlingStrikeRate: (playerData.wicketsTaken + player.bowlingWicketsTaken)>0?((playerData.ballsBowled + player.bowlingBallsBowled)/(playerData.wicketsTaken + player.bowlingWicketsTaken)).toFixed(2):"0.00",
+            centuries: playerData.centuries + (player.battingRunsScored >= 100 ? 1 : 0),
+            economyRate: player.bowlingEconomyRate,
+            fiveWickets: playerData.fiveWickets + (player.bowlingWicketsTaken >= 5 ? 1 : 0),
+            halfCenturies: playerData.halfCenturies + (player.battingRunsScored >= 50 ? 1 : 0),
+            matches_played: playerData.matches_played + 1,
+            noOfTimesOut: playerData.noOfTimesOut + (player.battingOut ? 1 : 0),
+            oversBowled: playerData.oversBowled + player.bowlingOversBowled,
+            runsConceded: playerData.runsConceded + player.bowlingRunsConceded,
+            runsScored: playerData.runsScored + player.battingRunsScored,
+            wicketsTaken: playerData.wicketsTaken + player.bowlingWicketsTaken,
+          
+          });
+        }
+      }
+
+      for(let i=0; i<team2Players.length; i++){
+        const player = team2Players[i];
+        const playerUpdateQuery = query(playerCollectionRef, where("player_id", "==", player.player_id));
+        const playerUpdateSnapshot = await getDocs(playerUpdateQuery);
+        if(!playerUpdateSnapshot.empty){
+          const playerDoc = playerUpdateSnapshot.docs[0];
+          const playerDocId = playerDoc.id;
+          const playerData = playerDoc.data();
+          const playerDocRef = doc(db,"player",playerDocId);
+          
+          const [bestWickets,bestRuns] = playerData.best_bowling? playerData.best_bowling.split("/").map(Number):[0,Infinity];
+          const currentWickets = Number(player.bowlingWicketsTaken);
+          const currentRuns = Number(player.bowlingRunsConceded);
+          const isNewBestBowling = currentWickets>bestWickets || (currentWickets===bestWickets && currentRuns<bestRuns);
+          await updateDoc(playerDocRef, {
+            
+            ballsBowled: playerData.ballsBowled+player.bowlingBallsBowled,
+            ballsFaced: playerData.ballsFaced+player.battingBallsFaced,
+            battingAverage: (playerData.noOfTimesOut + (player.battingOut ? 1 : 0))>0?(((playerData.runsScored+player.battingRunsScored)/(playerData.noOfTimesOut + (player.battingOut ? 1 : 0)))).toFixed(2):"0.00",
+            battingStrikeRate: player.battingStrikeRate,
+            best_bowling: isNewBestBowling?`${currentWickets}/${currentRuns}`:playerData.best_bowling,
+            bowlingAverage: (playerData.wicketsTaken + player.bowlingWicketsTaken)>0?((playerData.runsConceded + player.bowlingRunsConceded)/(playerData.wicketsTaken + player.bowlingWicketsTaken)).toFixed(2):"0.00",
+            bowlingStrikeRate: (playerData.wicketsTaken + player.bowlingWicketsTaken)>0?((playerData.ballsBowled + player.bowlingBallsBowled)/(playerData.wicketsTaken + player.bowlingWicketsTaken)).toFixed(2):"0.00",
+            centuries: playerData.centuries + (player.battingRunsScored >= 100 ? 1 : 0),
+            economyRate: player.bowlingEconomyRate,
+            fiveWickets: playerData.fiveWickets + (player.bowlingWicketsTaken >= 5 ? 1 : 0),
+            halfCenturies: playerData.halfCenturies + (player.battingRunsScored >= 50 ? 1 : 0),
+            matches_played: playerData.matches_played + 1,
+            noOfTimesOut: playerData.noOfTimesOut + (player.battingOut ? 1 : 0),
+            oversBowled: playerData.oversBowled + player.bowlingOversBowled,
+            runsConceded: playerData.runsConceded + player.bowlingRunsConceded,
+            runsScored: playerData.runsScored + player.battingRunsScored,
+            wicketsTaken: playerData.wicketsTaken + player.bowlingWicketsTaken,
+          
+          });
+        }
+      }
+      //update match result in db
+      const matchCollectionRef = collection(db, "match");
+      const matchUpdateQuery = query(matchCollectionRef, where("match_id", "==", matchId));
+      const matchUpdateSnapshot = await getDocs(matchUpdateQuery);
+      if(!matchUpdateSnapshot.empty){
+        const matchDoc = matchUpdateSnapshot.docs[0];
+        const matchDocId = matchDoc.id;
+        const matchDocRef = doc(db,"match",matchDocId);
+        await updateDoc(matchDocRef, {
+          result: 'completed',
+        });
+      }
+    }catch(e){
+      console.log('error:',e);
+    }finally{
+      setLoading(false);
+      router.push("/UmpireScoringMain");
+    }
   };
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -2577,6 +2563,120 @@ export default function MatchDetailsScreen() {
         </View>
       </Modal>
 
+      {/* Match Ends modal */}
+      {battingTeam && bowlingTeam && (
+        <Modal visible={!isMatchOngoing} transparent={true} animationType="slide" >
+          <View style={styles.modalContainer}><View style={styles.modalContent2}>
+            <Text style={styles.modalTextBold}>Match Results</Text>
+            <View style={styles.divider}></View>
+            {(battingTeam.battingTotalRuns>=(battingTeam.bowlingRunsConceded+1))?(
+              <Text style={styles.modalText}>{battingTeam.team_name} won the match by {battingTeam.players.length-battingTeam.battingwicketsLost-1} wickets.</Text>
+            ):((battingTeam.battingTotalRuns<battingTeam.bowlingRunsConceded)?(
+              <Text style={styles.modalText}>{bowlingTeam.team_name} won the match by {battingTeam.bowlingRunsConceded-battingTeam.battingTotalRuns} runs.</Text>
+            ):
+            (<Text style={styles.modalText}>Match is a Tie</Text>))}
+            <View style={styles.dividerBottom}></View>
+
+            <View style={styles.resultsContainer}>
+              <View style={styles.teamColumn}>
+                {/* Team A */}
+                <Text style={styles.teamname}>{team1?.team_name}</Text>
+                <Text style={styles.teamScore}>{team1?.battingTotalRuns}/{team1?.battingwicketsLost}</Text>
+                <Text style={styles.teamScore}>{team1?.battingoversPlayed}/{totalOvers}</Text>
+                <Text style={styles.teamScore}>Extras: {team1?.battingextras}</Text>
+                
+              </View>
+
+              <View style={styles.separator} />
+
+              <View style={styles.teamColumn}>
+                {/* Team B */}
+                <Text style={styles.teamname}>{team2?.team_name}</Text>
+                <Text style={styles.teamScore}>{team2?.battingTotalRuns}/{team2?.battingwicketsLost}</Text>
+                <Text style={styles.teamScore}>{team2?.battingoversPlayed}/{totalOvers}</Text>
+                <Text style={styles.teamScore}>Extras: {team2?.battingextras}</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider}></View>
+
+            <View style={styles.resultsContainer2}>
+              {/* Best Batsman */}
+              {team1Players && team1Players.length > 0 && team2Players && team2Players.length > 0 && (
+                <Text style={styles.teamScore}>
+                  B. Batsman: {
+                    // Combine both teams' players and find the best batsman
+                    [...team1Players, ...team2Players]
+                      .reduce((max, player) => player.battingRunsScored > max.battingRunsScored ? player : max, team1Players[0] || team2Players[0])  // Initial value added
+                      .name
+                  } ({ 
+                    [...team1Players, ...team2Players]
+                      .reduce((max, player) => player.battingRunsScored > max.battingRunsScored ? player : max, team1Players[0] || team2Players[0])  // Initial value added
+                      .battingRunsScored
+                  } - { 
+                    [...team1Players, ...team2Players]
+                      .reduce((max, player) => player.battingRunsScored > max.battingRunsScored ? player : max, team1Players[0] || team2Players[0])  // Initial value added
+                      .battingoversPlayed
+                  })
+                </Text>
+              )}
+
+              {/* Best Bowler */}
+              {team1Players && team1Players.length > 0 && team2Players && team2Players.length > 0 && (
+                <Text style={styles.teamScore}>
+                  B. Bowler: {
+                    // Combine both teams' players, filter out those who haven't bowled, then find the best bowler based on wickets and runs conceded
+                    [...team1Players, ...team2Players]
+                      .filter(player => player.bowlingBallsBowled > 0)  // Only consider players who have bowled
+                      .reduce((best, player) => {
+                        // Prioritize wickets, then least runs conceded
+                        if (player.bowlingWicketsTaken > best.bowlingWicketsTaken) {
+                          return player;
+                        }
+                        if (player.bowlingWicketsTaken === best.bowlingWicketsTaken && player.bowlingRunsConceded < best.bowlingRunsConceded) {
+                          return player;
+                        }
+                        return best;
+                      }, { name: '', bowlingWicketsTaken: 0, bowlingRunsConceded: Infinity })  // Set initial values to handle edge cases
+                      .name
+                  } ({ 
+                    [...team1Players, ...team2Players]
+                      .filter(player => player.bowlingBallsBowled > 0)
+                      .reduce((best, player) => {
+                        if (player.bowlingWicketsTaken > best.bowlingWicketsTaken) {
+                          return player;
+                        }
+                        if (player.bowlingWicketsTaken === best.bowlingWicketsTaken && player.bowlingRunsConceded < best.bowlingRunsConceded) {
+                          return player;
+                        }
+                        return best;
+                      }, { name: '', bowlingWicketsTaken: 0, bowlingRunsConceded: Infinity })
+                      .bowlingRunsConceded
+                  } /{ 
+                    [...team1Players, ...team2Players]
+                      .filter(player => player.bowlingBallsBowled > 0)
+                      .reduce((best, player) => {
+                        if (player.bowlingWicketsTaken > best.bowlingWicketsTaken) {
+                          return player;
+                        }
+                        if (player.bowlingWicketsTaken === best.bowlingWicketsTaken && player.bowlingRunsConceded < best.bowlingRunsConceded) {
+                          return player;
+                        }
+                        return best;
+                      }, { name: '', bowlingWicketsTaken: 0, bowlingRunsConceded: Infinity })
+                      .bowlingWicketsTaken
+                  })
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity onPress={updateAllStats} style={styles.modalButton}>
+              <Text style={styles.buttonText}>End Match</Text>
+            </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Header with back button and match title */}
       <View style={styles.header}>
         <Text style={styles.matchTitle}>
@@ -2712,6 +2812,13 @@ const styles = StyleSheet.create({
     width: "80%",
     alignItems: "center",
   },
+  modalContent2: {
+    backgroundColor: "#1e1e1e",
+    padding: 20,
+    borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
+  },
   modalText: {
     fontSize: 18,
     color:'lightgray',
@@ -2721,7 +2828,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color:'lightgray',
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 0,
   },
   modalButton: {
     backgroundColor: "#005B41",
@@ -2734,6 +2841,60 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  divider: {
+    width: '90%',        // Full width
+    height: 1,             // Line thickness
+    backgroundColor: '#ccc', // Line color (gray)
+    marginVertical: 10,    // Spacing above and below the line
+  },
+  dividerBottom: {
+    width: '90%',        // Full width
+    height: 1,             // Line thickness
+    backgroundColor: '#ccc', // Line color (gray)
+    marginBottom:10,    // Spacing above and below the line
+  },
+  resultsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+    marginBottom:20,
+  },
+  resultsContainer2: {
+    flexDirection:'column',
+    justifyContent: 'center',
+    alignContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    textAlign: 'center',
+    width: '90%',
+    marginTop: 10,
+    marginBottom:20,
+  },
+  teamColumn: {
+    width: '45%',
+    alignItems: 'center',
+  },
+  separator: {
+    width: 1,
+    backgroundColor: '#005B41',
+    height: 'auto',
+  },
+  teamname: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color:'lightgray'
+  },
+  teamScore: {
+    fontSize: 14,
+    marginTop: 5,
+    color: 'lightgray',
+    justifyContent:'center',
+    alignContent:'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    textAlign: 'center',
   },
   timerContainer: {
     alignItems: "center",

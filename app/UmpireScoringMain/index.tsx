@@ -74,7 +74,7 @@ export default function MatchDetails() {
         const matchesColllectionRef = collection(db, "match");
 
         for (const matchId of matches_officiated) {
-            const q = query(matchesColllectionRef, where("match_id", "==", matchId));
+            const q = query(matchesColllectionRef, where("match_id", "==", matchId),where("result","==","pending"));
             const querySnapshot = await getDocs(q);
 
             querySnapshot.forEach((doc) => {
@@ -99,7 +99,7 @@ export default function MatchDetails() {
     } finally {
         setLoading(false);
     }
-};
+  };
 
 
   return (
