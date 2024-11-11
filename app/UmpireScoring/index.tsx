@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Image,
   TextInput,
   ActivityIndicator,
 } from "react-native";
@@ -17,6 +18,7 @@ import CustomAlert from "@/components/CustomAlert";
 interface Player {
   name: string;
   player_id: string;
+  role:string;
   team_id: string;
   battingRunsScored: number;
   battingBallsFaced: number;
@@ -85,6 +87,10 @@ export default function MatchDetailsScreen() {
   const [isFreeHit, setFreeHit] = useState(false);
   const [isFreeHitModalVisible, setFreeHitModalVisible] = useState(false);
   const [freeHitStrikerScore, setFreeHitStrikerScore] = useState(0);
+  const batsmanIcon = require('@/assets/images/batsman.png');
+  const bowlerIcon = require('@/assets/images/bowler.png');
+  const allRounderIcon = require('@/assets/images/allrounder.png');
+  const wicketKeeperIcon = require('@/assets/images/wicketkeeper.png');
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -184,6 +190,7 @@ export default function MatchDetailsScreen() {
           team1Data.push({
             name: data.name,
             player_id: data.player_id,
+            role: data.role,
             team_id: data.team_id,
             battingRunsScored: 0,
             battingBallsFaced: 0,
@@ -210,6 +217,7 @@ export default function MatchDetailsScreen() {
           team2Data.push({
             name: data.name,
             player_id: data.player_id,
+            role: data.role,
             team_id: data.team_id,
             battingRunsScored: 0,
             battingBallsFaced: 0,
@@ -2418,14 +2426,19 @@ export default function MatchDetailsScreen() {
                                     team2Players.find(p => p.player_id === playerId);
                       // Only show players who are not out
                       if (player && !player.battingOut && player.player_id !== nonStrikerBatsman?.player_id) {
-                          return (
-
+                        const roleIcon = player.role === 'Batsman'? batsmanIcon: (player.role === 'Bowler'? bowlerIcon: (player.role === 'Allrounder'? allRounderIcon: (player.role === 'Wicket Keeper'? wicketKeeperIcon: '')));
+                        return (
                               <TouchableOpacity
                                   key={player.player_id}
                                   style={styles.modalButton}
                                   onPress={() => handleSelectBatsman(player)}
                               >
+                                <View style={styles.row}>
                                   <Text style={styles.modalButtonText}>{player.name}</Text>
+                                  {roleIcon &&(
+                                    <Image source={roleIcon} style={styles.roleIcon} />
+                                  )}
+                                </View>
                               </TouchableOpacity>
                           );
                       }
@@ -2442,14 +2455,19 @@ export default function MatchDetailsScreen() {
                   <Text style={styles.modalText}>Select Bowler</Text>
                   {(bowlingTeam?.players || []).map((playerId) => {
                       const player = team1Players.find(p => p.player_id === playerId) || team2Players.find(p => p.player_id === playerId);
-                      
+                      const roleIcon = player?.role === 'Batsman'? batsmanIcon: (player?.role === 'Bowler'? bowlerIcon: (player?.role === 'Allrounder'? allRounderIcon: (player?.role === 'Wicket Keeper'? wicketKeeperIcon: '')));
                       return (
                           <TouchableOpacity
                               key={player!.player_id}
                               style={styles.modalButton}
                               onPress={() => handleSelectBowler(player!)}
                           >
+                            <View style={styles.row}>
                               <Text style={styles.modalButtonText}>{player?.name}</Text>
+                              {roleIcon &&(
+                                <Image source={roleIcon} style={styles.roleIcon} />
+                              )}
+                            </View>
                           </TouchableOpacity>
                       );
                   })}
@@ -2570,11 +2588,11 @@ export default function MatchDetailsScreen() {
             <Text style={styles.modalTextBold}>Match Results</Text>
             <View style={styles.divider}></View>
             {(battingTeam.battingTotalRuns>=(battingTeam.bowlingRunsConceded+1))?(
-              <Text style={styles.modalText}>{battingTeam.team_name} won the match by {battingTeam.players.length-battingTeam.battingwicketsLost-1} wickets.</Text>
+              <Text style={styles.modalText2}>{battingTeam.team_name} won the match by {battingTeam.players.length-battingTeam.battingwicketsLost-1} wickets.</Text>
             ):((battingTeam.battingTotalRuns<battingTeam.bowlingRunsConceded)?(
-              <Text style={styles.modalText}>{bowlingTeam.team_name} won the match by {battingTeam.bowlingRunsConceded-battingTeam.battingTotalRuns} runs.</Text>
+              <Text style={styles.modalText2}>{bowlingTeam.team_name} won the match by {battingTeam.bowlingRunsConceded-battingTeam.battingTotalRuns} runs.</Text>
             ):
-            (<Text style={styles.modalText}>Match is a Tie</Text>))}
+            (<Text style={styles.modalText2}>Match is a Tie</Text>))}
             <View style={styles.dividerBottom}></View>
 
             <View style={styles.resultsContainer}>
@@ -2824,6 +2842,16 @@ const styles = StyleSheet.create({
     color:'lightgray',
     marginBottom: 20,
   },
+  modalText2: {
+    fontSize: 18,
+    color:'lightgray',
+    marginBottom: 20,
+    justifyContent: 'center',
+    alignContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    textAlign: 'center',
+  },
   modalTextBold: {
     fontSize: 18,
     color:'lightgray',
@@ -2841,6 +2869,17 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  row: {
+    flexDirection: 'row',     // Align items in a row
+    alignItems: 'center',     // Center items vertically
+    justifyContent: 'space-between', // Optional: Add space between elements
+  },
+  roleIcon: {
+    width: 24,     // width of the icon
+    height: 24,    // height of the icon
+    marginLeft: 10, // space between name and icon
+    tintColor: 'white',
   },
   divider: {
     width: '90%',        // Full width
