@@ -59,6 +59,7 @@ export default function PlayerAttributesScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -76,15 +77,18 @@ export default function PlayerAttributesScreen() {
       } catch (error) {
         console.log("Error fetching user data:", error);
       }
+      finally{
+        setLoading(false);
+      }
     };
 
     fetchUserData();
   }, []);
 
   const handleSaveAttributes = async () => {
-    setLoading(true);
+    
     try {
-      
+      setLoading(true);
       const storedUserData = await AsyncStorage.getItem("userData");
       if (storedUserData) {
         const parsedUserData = JSON.parse(storedUserData);
@@ -151,12 +155,7 @@ export default function PlayerAttributesScreen() {
 
   return (
     <>
-    {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size='large' color='#005B41' />
-      </View>
-      ) : (
-        <>
+    
     <ScrollView style={styles.container}>
       
       {/* Back Button */}
@@ -165,6 +164,12 @@ export default function PlayerAttributesScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Attributes</Text>
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+      </View>
+      ) : (
+        <>
 
       {/* Role Selection Container */}
       <View style={styles.section}>
@@ -263,9 +268,10 @@ export default function PlayerAttributesScreen() {
         <Text style={styles.saveButtonText}>Save Attributes</Text>
       </TouchableOpacity>
       
+      </>
+    )}
     </ScrollView>
-    </>
-  )}
+    
   <CustomAlert 
     visible={alertVisible} 
     message={alertMessage} 

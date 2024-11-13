@@ -94,10 +94,12 @@ export default function TeamOwnerProfileScreen() {
             console.log("Team exists");
             await fetchTeamData();
           }
-          setLoading(false);
+          
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 

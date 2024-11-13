@@ -32,7 +32,8 @@ export default function PlayerRequestTeam() {
   const [modalVisible2, setModalVisible2] = useState(false); 
   const [teams, setTeams] = useState<TeamData[]>([]); // State to hold the list of teams
   const [loading, setLoading] = useState(true); // Loading state
-
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
   const [userData, setUserData] = useState({
     name: '',
     username: '',
@@ -70,9 +71,15 @@ export default function PlayerRequestTeam() {
     economyRate : 0,
     bowlingStrikeRate : 0,
   });
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -81,6 +88,8 @@ export default function PlayerRequestTeam() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -177,7 +186,8 @@ export default function PlayerRequestTeam() {
         const userDocId = userDoc.id;
         const userDocData = userDoc.data();
         if(userDocData.status === 'pending'){
-          Alert.alert('Wait for the Team\'s response');
+          setAlertMessage('Wait for the Team\'s response');
+          setAlertVisible(true);
         }
         else if(userDocData.status === 'rejected'){
           requestToJoinTeam2();
@@ -200,9 +210,8 @@ export default function PlayerRequestTeam() {
         await addDoc(requestsCollectionRef, requestData);
   
         // Show a success message
-        Alert.alert("Request Sent",` Your request to join ${selectedTeam.team_name} has been sent!`, [
-          { text: "OK" }
-        ]);
+        setAlertMessage('Your request has been sent to '+selectedTeam.team_name+'!');
+        setAlertVisible(true);
         fetchTeams();
       }
   
@@ -210,8 +219,8 @@ export default function PlayerRequestTeam() {
       console.error("Error handling request:", error);
       Alert.alert("Error", "An error occurred while sending your request.");
     } finally {
-
-      setModalVisible(false); // Close the modal
+      setModalVisible(false); 
+      setLoading(false);
     }
   };
 
@@ -241,7 +250,8 @@ export default function PlayerRequestTeam() {
           status:'pending',
         });
         console.log('rejected request was sent again')
-        Alert.alert('Your request has been sent again!');
+        setAlertMessage('Your request has been sent again!');
+        setAlertVisible(true);
         fetchTeams();
       } 
   
@@ -350,6 +360,12 @@ export default function PlayerRequestTeam() {
       </Modal>
       </>
       )}
+      <CustomAlert 
+        visible={alertVisible} 
+        message={alertMessage} 
+        onConfirm={handleAlertConfirm} 
+        onCancel={handleAlertConfirm}
+      />
     </View>
   );
 }

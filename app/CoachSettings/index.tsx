@@ -46,6 +46,7 @@ export default function CoachSettings() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -54,6 +55,8 @@ export default function CoachSettings() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -83,6 +86,7 @@ export default function CoachSettings() {
 
   const uploadImageToFirebase = async (uri:string) => {
     try {
+      setLoading(true);
       const response = await fetch(uri);
       const blob = await response.blob();
       const coachId = userData.coach_id;
@@ -96,6 +100,9 @@ export default function CoachSettings() {
       
       console.error("Error uploading image: ", error);
       throw error;
+    }
+    finally{
+      setLoading(false);
     }
   };
   const logoutButtonPressed = () => {
@@ -308,6 +315,8 @@ export default function CoachSettings() {
       </TouchableOpacity>
 
       </ScrollView>
+      </>
+      )}
       <Modal
         transparent={true}
         animationType="slide"
@@ -381,8 +390,7 @@ export default function CoachSettings() {
         </View>
       </View>
 
-      </>
-      )}
+      
       <CustomAlert 
         visible={alertVisible} 
         message={alertMessage} 

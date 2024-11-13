@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
+import CustomAlert from "@/components/CustomAlert";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import firebase from "firebase/app"
@@ -39,13 +39,20 @@ export default function CoachHomeScreen() {
   });
 
   const router = useRouter();
-  const navigation = useNavigation(); // Used to navigate between screens
   const [assignedPlayersData, setAssignedPlayersData] = useState<Player[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -55,7 +62,9 @@ export default function CoachHomeScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
-      } 
+      } finally{
+        setLoading(false);
+      }
     };
 
     fetchUserData();
@@ -67,6 +76,7 @@ export default function CoachHomeScreen() {
     console.log("Fetching data for player IDs:", playerIds); // Debug log
   
     try {
+      setLoading(true);
       const cachedPlayers = await AsyncStorage.getItem("cachedPlayersData");
 
     if (cachedPlayers && !forceRefresh) {
@@ -100,6 +110,8 @@ export default function CoachHomeScreen() {
       await AsyncStorage.setItem("cachedPlayersData", JSON.stringify(playersArray));
     } catch (error) {
       console.error("Error fetching players:", error); // Handle errors
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -117,6 +129,11 @@ export default function CoachHomeScreen() {
           Welcome, <Text style={styles.coachText}>{userData.coach_name}</Text>
         </Text>
       </View>
+      {loading? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+       </View>
+      ):(<>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}
       refreshControl={
@@ -159,6 +176,13 @@ export default function CoachHomeScreen() {
           </ScrollView>
         </TouchableOpacity>
       </ScrollView>
+      </>)}
+      <CustomAlert 
+    visible={alertVisible} 
+    message={alertMessage} 
+    onConfirm={handleAlertConfirm} 
+    onCancel={handleAlertConfirm}
+    />
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -212,6 +236,8 @@ export default function CoachHomeScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    
+    
   );
 }
 

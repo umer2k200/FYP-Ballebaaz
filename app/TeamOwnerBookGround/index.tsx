@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from "expo-router";
-import { useNavigation } from '@react-navigation/native';
-import { View, Text, TextInput, Button, Modal, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Platform } from 'react-native';
+import { View, Text, TextInput, Button, Modal, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import CustomAlert from '@/components/CustomAlert';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function GroundBookingScreen() {
@@ -12,9 +11,14 @@ export default function GroundBookingScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
   const router = useRouter();
-  const navigation = useNavigation();
 
   // Date Change Handler
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -38,6 +42,11 @@ export default function GroundBookingScreen() {
     <View style={styles.container}>
       <Text style={styles.pageName}>Ground Booking</Text>
       {/* Search bar */}
+      {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
       <TextInput
         style={styles.input}
         placeholder="Search by ground name..."
@@ -86,6 +95,8 @@ export default function GroundBookingScreen() {
       <TouchableOpacity style={styles.matchesButton} onPress={() => router.push('/TeamOwnerBookGround-2')}>
         <Text style={styles.matchesButtonText}>Search</Text>
       </TouchableOpacity>
+      </>)}
+    
 
       {/* Adjusted Navbar */}
       <View style={styles.navbar}>
@@ -208,6 +219,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#121212',
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   input: {
     backgroundColor: '#1e1e1e',

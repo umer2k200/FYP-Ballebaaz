@@ -1,7 +1,7 @@
 import React, { useState , useEffect} from 'react';
 import { useRouter } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -21,6 +21,7 @@ interface VideoItem {
 }
 
 export default function DrillsScreen() {
+  const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     username: '',
@@ -64,6 +65,7 @@ export default function DrillsScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -75,6 +77,8 @@ export default function DrillsScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -89,6 +93,7 @@ export default function DrillsScreen() {
 
   const searchVideos = async () => {
     try {
+      setLoading(true);
       // Define default keywords related to cricket drills
       const drillKeywords = "drills coaching tutorials";
       // Combine the user input query with drill keywords
@@ -101,6 +106,8 @@ export default function DrillsScreen() {
       setVideos(response.data.items);
     } catch (error) {
       console.error(error);
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -147,6 +154,11 @@ export default function DrillsScreen() {
           />
         </TouchableOpacity>
       </View>
+      {loading? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+       </View>
+      ):(<>
 
       {/* Drills List */}
       <ScrollView contentContainerStyle={styles.drillList}>
@@ -161,6 +173,7 @@ export default function DrillsScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </>)}
 
       {/* Navbar */}
       <View style={styles.navbar}>
@@ -196,6 +209,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212', // Dark background for the drills section
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   popup: {
     position: 'absolute',

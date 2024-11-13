@@ -181,7 +181,7 @@ export default function AddGroundScreen() {
       setAlertVisible(true);
       }finally {
          setLoading(false);
-         router.push("/ClubOwnerHome");
+         router.push("/ClubOwnerHomePage");
       }
 
       // Clear the fields after adding

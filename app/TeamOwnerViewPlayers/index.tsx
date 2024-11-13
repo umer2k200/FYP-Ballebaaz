@@ -22,6 +22,7 @@ import {
 import { db } from "@/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import CustomAlert from "@/components/CustomAlert";
 
 interface player {
   name: string;
@@ -65,8 +66,15 @@ interface player {
 export default function CoachAssignedPlayers() {
   const router = useRouter();
   const navigation = useNavigation();
+  
 
-  const [loading, setLoading] = useState(false); // Loader state
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
   const [userData, setUserData] = useState({
     username: "",
     phone_no: 0,
@@ -79,6 +87,7 @@ export default function CoachAssignedPlayers() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -87,6 +96,8 @@ export default function CoachAssignedPlayers() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -260,6 +271,12 @@ export default function CoachAssignedPlayers() {
           </View>
         </View>
       </Modal>
+      <CustomAlert 
+      visible={alertVisible} 
+      message={alertMessage} 
+      onConfirm={handleAlertConfirm} 
+      onCancel={handleAlertConfirm}
+      />
     </View>
   );
 }
@@ -272,6 +289,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
+  
   header: {
     flexDirection: 'row',
     alignItems: 'center',

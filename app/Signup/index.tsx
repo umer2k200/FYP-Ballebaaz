@@ -534,13 +534,14 @@ export default function Signup() {
 
   return (
     <View style={styles.container}>
+      
+      <Text style={styles.title}>SIGN UP</Text>
       { loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size='large' color='#005B41' />
         </View>
       ) : (
         <>
-      <Text style={styles.title}>SIGN UP</Text>
 
       <View style={styles.inputContainer}>
         <Icon name="user" size={20} color="grey" />

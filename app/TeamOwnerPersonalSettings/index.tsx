@@ -78,6 +78,7 @@ export default function PlayerSettingsScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -87,6 +88,8 @@ export default function PlayerSettingsScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -148,6 +151,7 @@ export default function PlayerSettingsScreen() {
 
   const uploadImageToFirebase = async (uri:string) => {
     try {
+      setLoading(true);
       const response = await fetch(uri);
       const blob = await response.blob();
       const teamOwnerId = userData.teamOwner_id;
@@ -161,6 +165,8 @@ export default function PlayerSettingsScreen() {
       
       console.error("Error uploading image: ", error);
       throw error;
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -299,15 +305,15 @@ export default function PlayerSettingsScreen() {
   return (
     
     <View style={styles.container}>
-      {loading ? (
+      
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <Text style={styles.title}>Settings</Text>
+          {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ) : (
         <>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          <Text style={styles.title}>Settings</Text>
-
           {/* Image Picker */}
       <TouchableOpacity onPress={handleImagePicker} style={styles.imagePicker}>
               {selectedImage || playerData.profile_pic ? (
@@ -375,9 +381,10 @@ export default function PlayerSettingsScreen() {
           <TouchableOpacity style={styles.updateButton} onPress={handleUpdatePersonal}>
             <Text style={styles.updateButtonText}>Update Profile</Text>
           </TouchableOpacity>
-          </ScrollView>
-        </>
+          </>
       )}
+          </ScrollView>
+        
       <CustomAlert
         visible={alertVisible}
         message={alertMessage}

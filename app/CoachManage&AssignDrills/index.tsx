@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, RefreshControl, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, RefreshControl, TextInput,ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, query, where, getDocs, getFirestore, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 import CustomAlert from "@/components/CustomAlert";
 
 interface Player {
@@ -33,13 +32,14 @@ export default function CoachManageandAssignDrills() {
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation(); // Used to navigate between screens
+  const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -47,6 +47,9 @@ export default function CoachManageandAssignDrills() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      }
+      finally{
+        setLoading(false);
       }
     };
 
@@ -103,6 +106,7 @@ export default function CoachManageandAssignDrills() {
       newDrill.drillName
     ) {
       try {
+        setLoading(true);
         // Find the selected player
         const selectedP = selectedPlayer
 
@@ -150,6 +154,9 @@ export default function CoachManageandAssignDrills() {
         setAlertMessage('Failed to add session'); // Provide specific error feedback
         setAlertVisible(true);
       }
+      finally{
+        setLoading(false);
+      }
     } else {
       setAlertMessage("Please fill in all the fields");
       setAlertVisible(true);
@@ -175,7 +182,11 @@ export default function CoachManageandAssignDrills() {
       <View style={styles.titleContainer}>
         <Text style={styles.pageTitle}>Add Drills</Text>
       </View>
-
+    {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+     </View>
+    ):(<>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -196,6 +207,8 @@ export default function CoachManageandAssignDrills() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </>)}
+      
 
       {/* Player Details Modal */}
       <Modal
@@ -302,6 +315,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   titleContainer: {
     marginTop: 70,

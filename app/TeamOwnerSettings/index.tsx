@@ -47,6 +47,7 @@ export default function TeamOwnerSettingsScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -82,6 +83,8 @@ export default function TeamOwnerSettingsScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -112,6 +115,7 @@ export default function TeamOwnerSettingsScreen() {
 
   const uploadImageToFirebase = async (uri: string) => {
     try {
+      setLoading(true);
       const response = await fetch(uri);
       const blob = await response.blob();
       const playerId = userData.team_id;
@@ -124,6 +128,8 @@ export default function TeamOwnerSettingsScreen() {
     } catch (error) {
       console.error("Error uploading image: ", error);
       throw error;
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -199,14 +205,15 @@ export default function TeamOwnerSettingsScreen() {
 
   return (
     <View style={styles.container}>
-      {loading ? (
+      
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Text style={styles.title}>Settings</Text>
+            {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ) : (
         <>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <Text style={styles.title}>Settings</Text>
             {/* Image Picker */}
             {teamExists && (
               <TouchableOpacity
@@ -290,6 +297,8 @@ export default function TeamOwnerSettingsScreen() {
             >
               <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
+            </>
+      )}
           </ScrollView>
           <Modal
             transparent={true}
@@ -319,8 +328,7 @@ export default function TeamOwnerSettingsScreen() {
               </View>
             </View>
           </Modal>
-        </>
-      )}
+        
       {/* Custom Alert for messages */}
       <CustomAlert
         visible={alertVisible}

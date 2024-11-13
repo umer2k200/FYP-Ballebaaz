@@ -71,6 +71,7 @@ export default function AddTeamScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -81,6 +82,8 @@ export default function AddTeamScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUserData();
@@ -140,6 +143,7 @@ export default function AddTeamScreen() {
 
   const uploadImageToFirebase = async (uri: string) => {
     try {
+      setLoading(true);
       const response = await fetch(uri);
       const blob = await response.blob();
       const teamId = teamData.team_id;
@@ -152,6 +156,8 @@ export default function AddTeamScreen() {
     } catch (error) {
       console.error("Error uploading image: ", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -272,14 +278,15 @@ export default function AddTeamScreen() {
 
   return (
     <View style={styles.container}>
-      {loading ? (
+     
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            <Text style={styles.title}>Add your Team</Text>
+            {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#005B41" />
         </View>
       ) : (
         <>
-          <ScrollView contentContainerStyle={styles.scrollViewContent}>
-            <Text style={styles.title}>Add your Team</Text>
             {/* Image Picker */}
             <TouchableOpacity
               onPress={handleImagePicker}
@@ -313,9 +320,10 @@ export default function AddTeamScreen() {
             <TouchableOpacity style={styles.addButton} onPress={handleAddTeam}>
               <Text style={styles.buttonText}>Add Team</Text>
             </TouchableOpacity>
-          </ScrollView>
-        </>
+            </>
       )}
+          </ScrollView>
+        
       <CustomAlert
         visible={alertVisible}
         message={alertMessage}

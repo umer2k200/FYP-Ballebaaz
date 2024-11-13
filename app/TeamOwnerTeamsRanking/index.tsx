@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "expo-router";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, Image , ActivityIndicator} from 'react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from '@/firebaseConfig';
+import CustomAlert from '@/components/CustomAlert';
 
 interface TeamData {
   doc_id: string;
@@ -27,6 +28,13 @@ const TeamRanking = () => {
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null); // Manage expanded state
   const [teamData, setTeamData] = useState<TeamData[]>([]); // Initialize as an array
   const [isModalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
 
   const toggleModal = () => {
@@ -41,6 +49,7 @@ const TeamRanking = () => {
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
+        setLoading(true);
         const teamsCollectionRef = collection(db,'team');
         const querySnapshot = await getDocs(teamsCollectionRef);
         let teamsList = querySnapshot.docs.map((doc) => {
@@ -81,6 +90,8 @@ const TeamRanking = () => {
         });
       } catch (error) {
         console.error("Error fetching team data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -89,12 +100,18 @@ const TeamRanking = () => {
 
   // Handle match request
   const sendMatchRequest = () => {
-    Alert.alert('Match Request Sent!', 'Your match request has been sent successfully.');
+    setAlertMessage('Your match request has been sent successfully.');
+    setAlertVisible(true);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.pageName}>Team Rankings</Text>
+      {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
       <ScrollView>
         {teamData.map((team) => (
           <View key={team.team_id} style={styles.teamContainer}>
@@ -119,6 +136,7 @@ const TeamRanking = () => {
           </View>
         ))}
       </ScrollView>
+      </>)}
 
       <View style={styles.navbar}>
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerDrills')}>
@@ -168,6 +186,12 @@ const TeamRanking = () => {
           </View>
         </View>
       </Modal>
+      <CustomAlert 
+      visible={alertVisible} 
+      message={alertMessage} 
+      onConfirm={handleAlertConfirm} 
+      onCancel={handleAlertConfirm}
+    />
     </View>
   );
 };
@@ -178,6 +202,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#121212',
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   pageName: {
     fontSize: 28,

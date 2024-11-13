@@ -66,7 +66,8 @@ export default function PlayerAttributesScreen() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
+      try { 
+        setLoading(true);
         const storedTeamOwnerData = await AsyncStorage.getItem("userData");
 
         if (storedTeamOwnerData) {
@@ -110,14 +111,18 @@ export default function PlayerAttributesScreen() {
       } catch (error) {
         console.log("Error fetching user data:", error);
       }
+      finally{
+        setLoading(false);
+      }
     };
 
     fetchUserData();
   }, []);
 
   const handleSaveAttributes = async () => {
-    setLoading(true);
+    
     try {
+      setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
             const parsedUserData = JSON.parse(storedUserData);
@@ -156,28 +161,6 @@ export default function PlayerAttributesScreen() {
                         height: parseFloat(heightFeet) || parsedUserData.height,
                     });
 
-                    // Update teamOwner document (assuming you want to update the same attributes)
-                    // await updateDoc(teamOwnerDocRef, {
-                    //     player_id: userPlayerId, // If you need to keep player_id in teamOwner
-                    //     role: role || parsedUserData.role,
-                    //     preferred_hand: preferredHand || parsedUserData.preferred_hand,
-                    //     bowling_hand: bowlinghand || parsedUserData.bowling_hand,
-                    //     age: parseInt(age) || parsedUserData.age,
-                    //     weight: parseFloat(weight) || parsedUserData.weight,
-                    //     height: parseFloat(heightFeet) || parsedUserData.height,
-                    // });
-
-                    // const updatedUserData = {
-                    //     ...parsedUserData,
-                    //     role: role || parsedUserData.role,
-                    //     preferred_hand: preferredHand || parsedUserData.preferred_hand,
-                    //     bowling_hand: bowlinghand || parsedUserData.bowling_hand,
-                    //     age: parseInt(age) || parsedUserData.age,
-                    //     weight: parseFloat(weight) || parsedUserData.weight,
-                    //     height: parseFloat(heightFeet) || parsedUserData.height,
-                    // };
-
-                    // await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
                     setAlertMessage("Attributes updated successfully!");
                     setAlertVisible(true);
                 } else {
@@ -209,12 +192,7 @@ export default function PlayerAttributesScreen() {
 
   return (
     <>
-    {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size='large' color='#005B41' />
-      </View>
-      ) : (
-        <>
+    
     <ScrollView style={styles.container}>
       
       {/* Back Button */}
@@ -223,6 +201,12 @@ export default function PlayerAttributesScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Attributes</Text>
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+      </View>
+      ) : (
+        <>
 
       {/* Role Selection Container */}
       <View style={styles.section}>
@@ -320,10 +304,11 @@ export default function PlayerAttributesScreen() {
       <TouchableOpacity style={styles.saveButton} onPress={handleSaveAttributes}>
         <Text style={styles.saveButtonText}>Save Attributes</Text>
       </TouchableOpacity>
+      </>
+  )}
       
     </ScrollView>
-    </>
-  )}
+    
   <CustomAlert 
     visible={alertVisible} 
     message={alertMessage} 

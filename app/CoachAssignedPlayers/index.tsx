@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image, RefreshControl, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, query, where, getDocs, getFirestore } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
+import CustomAlert from "@/components/CustomAlert";
 
-interface Player {
+interface Player { 
   name: string;
   username: string;
   phone_no: string;
@@ -51,11 +51,18 @@ export default function CoachAssignedPlayers() {
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
-  const navigation = useNavigation(); // Used to navigate between screens
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -63,6 +70,9 @@ export default function CoachAssignedPlayers() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      }
+      finally{
+        setLoading(false);
       }
     };
 
@@ -74,6 +84,7 @@ export default function CoachAssignedPlayers() {
     const playersArray: Player[] = [];
 
     try {
+      setLoading(true);
       const cachedPlayers = await AsyncStorage.getItem("cachedPlayersData");
 
       if (cachedPlayers && !forceRefresh) {
@@ -102,6 +113,9 @@ export default function CoachAssignedPlayers() {
     } catch (error) {
       console.error("Error fetching players:", error);
     }
+    finally{
+      setLoading(false);
+    }
   };
 
   const onRefresh = async () => {
@@ -112,6 +126,8 @@ export default function CoachAssignedPlayers() {
       await fetchPlayersData(parsedUserData.assigned_players, true);
     }
     setRefreshing(false);
+    // setAlertMessage("Update failed");
+    // setAlertVisible(true);
   };
 
   const handlePlayerPress = (player: Player) => {
@@ -125,11 +141,17 @@ export default function CoachAssignedPlayers() {
   };
 
   return (
+    <>
     <View style={styles.container}>
       <View style={styles.titleContainer}>
         <Text style={styles.pageTitle}>Assigned Players</Text>
       </View>
 
+    {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -153,6 +175,7 @@ export default function CoachAssignedPlayers() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </>)}
 
       {/* Player Details Modal */}
       <Modal
@@ -237,6 +260,13 @@ export default function CoachAssignedPlayers() {
         </TouchableOpacity>
       </View>
     </View>
+    <CustomAlert 
+      visible={alertVisible} 
+      message={alertMessage} 
+      onConfirm={handleAlertConfirm} 
+      onCancel={handleAlertConfirm}
+    />
+    </>
   );
 }
 
@@ -246,6 +276,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
     paddingHorizontal: 20,
     paddingBottom: 100,
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   titleContainer: {
     marginTop: 70,

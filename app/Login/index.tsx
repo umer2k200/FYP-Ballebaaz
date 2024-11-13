@@ -22,38 +22,10 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false); // New state variable
-  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false); 
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-
-
-  // const update = async () => {
-  //   const playerref = collection(db, "player");
-  //   const querySnapshot = await getDocs(playerref);
-  //   querySnapshot.forEach(async (playerDoc) => {
-  //     const playerId = playerDoc.id;
-  //     const playerRef = doc(db, "player", playerId);
-  //     await updateDoc(playerRef, {
-  //         runsScored : 0,
-  //         ballsFaced : 0,
-  //         battingAverage : 0,
-  //         battingStrikeRate : 0,
-  //         noOfTimesOut : 0,
-  //         centuries : 0,
-  //         halfCenturies : 0,
-  //         oversBowled : 0,
-  //         ballsBowled : 0,
-  //         runsConceded : 0,
-  //         wicketsTaken : 0,
-  //         bowlingAverage : 0,
-  //         economyRate : 0,
-  //         bowlingStrikeRate : 0,
-        
-  //     });
-  //   });
-  // }
   
   const handleLogin = async () => {
     if (!username || !password || !role) {

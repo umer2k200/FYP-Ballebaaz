@@ -12,7 +12,7 @@ import {
   TextInput,
   RefreshControl,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { Picker } from '@react-native-picker/picker';
 import { getFirestore, doc, collection, query, where, getDocs, updateDoc,getDoc} from "firebase/firestore";
@@ -42,6 +42,7 @@ export default function CoachTrainingSessions() {
   const [newSession, setNewSession] = useState<Partial<Session>>({});
   const [trainingSessions, setTrainingSessions] = useState<Session[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function CoachTrainingSessions() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         // Fetch user data
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
@@ -65,6 +67,8 @@ export default function CoachTrainingSessions() {
         }
       } catch (error) {
         console.log("Error fetching data:", error);
+      } finally{
+        setLoading(false);
       }
     };
   
@@ -197,6 +201,7 @@ export default function CoachTrainingSessions() {
       newSession.location
     ) {
       try {
+        setLoading(true);
         // Find the selected player
         const selectedPlayer = assignedPlayersData.find(
           (player) => player.name === newSession.playerName
@@ -251,6 +256,8 @@ export default function CoachTrainingSessions() {
         console.error("Error adding session:", error);
         setAlertMessage('Failed to add session'); // Provide specific error feedback
         setAlertVisible(true)
+      } finally{
+        setLoading(false);
       }
     } else {
       setAlertMessage("Please fill in all the fields");
@@ -267,7 +274,11 @@ const handleAlertConfirm = () => {
       <View style={styles.titleContainer}>
         <Text style={styles.pageTitle}>Training Sessions</Text>
       </View>
-
+    {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+     </View>
+    ):(<>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -300,6 +311,7 @@ const handleAlertConfirm = () => {
       >
         <Text style={styles.addButtonText}>+ Add Next Session</Text>
       </TouchableOpacity>
+      </>)}
 
       <Modal
         animationType="slide"

@@ -73,6 +73,12 @@ export default function CaptainRequestScreen() {
   const [playerData, setPlayersData] = useState<Player | null>(null);
   const [requestsData, setRequestsData] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
   const [userData, setUserData] = useState({
     username: "",
@@ -140,10 +146,12 @@ export default function CaptainRequestScreen() {
             setTeamExists(true);
             await fetchPlayerTeamRequests();
           }
-          setLoading(false);
+          
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
     fetchUserData();
@@ -282,20 +290,16 @@ export default function CaptainRequestScreen() {
   // Handle request acceptance
   const acceptRequest = async (player: Player) => {
     await updateRequestStatus(player.player_id, "accepted"); // Update status to accepted
-    Alert.alert(
-      "Request Accepted",
-      `You have accepted the request from ${player.name}.`
-    );
+    setAlertMessage(`You have accepted the request from ${player.name}.`);
+    setAlertVisible(true);
     fetchPlayerTeamRequests();
   };
 
   // Handle request rejection
   const rejectRequest = async (player: Player) => {
     await updateRequestStatus(player.player_id, "rejected"); // Update status to rejected
-    Alert.alert(
-      "Request Rejected",
-      `You have rejected the request from ${player.name}.`
-    );
+    setAlertMessage(`You have rejected the request from ${player.name}.`);
+    setAlertVisible(true);
     fetchPlayerTeamRequests();
   };
 
@@ -412,6 +416,12 @@ export default function CaptainRequestScreen() {
           </Modal>
         </>
       )}
+      <CustomAlert 
+        visible={alertVisible} 
+        message={alertMessage} 
+        onConfirm={handleAlertConfirm} 
+        onCancel={handleAlertConfirm}
+      />
     </View>
   );
 }

@@ -1,12 +1,12 @@
 import React, { useState , useEffect} from 'react';
 import { useRouter } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Linking,Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Linking,Modal,ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {db } from '@/firebaseConfig';
 import { doc, updateDoc, getDocs, query as fquery, where, collection } from 'firebase/firestore';
 import axios from 'axios';
-
+import CustomAlert from '@/components/CustomAlert';
 const API_KEY = 'AIzaSyD8_5HhOGBOYBKkWMHVm_mSJgUFozq03KU';
 interface VideoItem {
   id: {
@@ -60,10 +60,18 @@ export default function DrillsScreen() {
   })
 
   const [drillsExist, setDrillsExist] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedTeamOwnerData = await AsyncStorage.getItem("userData");
         if (storedTeamOwnerData) {
 
@@ -101,6 +109,8 @@ export default function DrillsScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -123,6 +133,7 @@ export default function DrillsScreen() {
 
   const searchVideos = async () => {
     try {
+      setLoading(true);
       // Define default keywords related to cricket drills
       const drillKeywords = "drills coaching tutorials";
       // Combine the user input query with drill keywords
@@ -135,6 +146,8 @@ export default function DrillsScreen() {
       setVideos(response.data.items);
     } catch (error) {
       console.error(error);
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -181,6 +194,11 @@ export default function DrillsScreen() {
           />
         </TouchableOpacity>
       </View>
+      {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
 
       {/* Drills List */}
       <ScrollView contentContainerStyle={styles.drillList}>
@@ -195,6 +213,7 @@ export default function DrillsScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </>)}
 
        {/* Navbar */}
        <View style={styles.navbar}>
@@ -278,6 +297,12 @@ export default function DrillsScreen() {
           </View>
         </View>
       </Modal>
+      <CustomAlert 
+      visible={alertVisible} 
+      message={alertMessage} 
+      onConfirm={handleAlertConfirm} 
+      onCancel={handleAlertConfirm}
+    />
     </View>
   );
 }
@@ -286,6 +311,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212', // Dark background for the drills section
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   popup: {
     position: 'absolute',

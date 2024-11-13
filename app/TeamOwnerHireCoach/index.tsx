@@ -114,6 +114,7 @@ export default function HireCoach() {
   useEffect(() => {
     const fetchUserData = async () => {
         try{
+          setLoading(true);
             const storedTeamOwnerData = await AsyncStorage.getItem("userData");
             if (storedTeamOwnerData) {
             const parsedTeamOwnerData = JSON.parse(storedTeamOwnerData);
@@ -149,6 +150,8 @@ export default function HireCoach() {
         }
         } catch (error) {
             console.error("Error fetching user data:", error);
+        } finally{
+          setLoading(false);
         }
     };
     fetchCoaches();

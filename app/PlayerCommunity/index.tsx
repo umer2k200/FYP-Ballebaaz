@@ -1,11 +1,10 @@
 import { useState,useEffect } from 'react';
 import React from 'react';
 import { useRouter } from "expo-router";
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, TextInput , ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, addDoc, query, orderBy,getDocs, serverTimestamp } from "firebase/firestore"; // Firestore methods
-import { db } from '@/firebaseConfig'; // Firebase configuration file
-
+import { collection, addDoc, query, orderBy,getDocs, serverTimestamp } from "firebase/firestore"; 
+import { db } from '@/firebaseConfig'; 
 
 type Message = {
   id: string;
@@ -16,6 +15,7 @@ type Message = {
 export default function CommunityScreen() {
   const [messages, setMessages] = useState<Message[]>([]); // Store community messages
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     username: '',
@@ -59,6 +59,7 @@ export default function CommunityScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -67,6 +68,8 @@ export default function CommunityScreen() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -76,6 +79,7 @@ export default function CommunityScreen() {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        setLoading(true);
         const communityRef = collection(db, 'community'); // Reference to the community collection
         const q = query(communityRef, orderBy('timestamp', 'asc')); // Create a query with the orderBy clause
   
@@ -91,6 +95,8 @@ export default function CommunityScreen() {
         setMessages(messagesArray); // Update the state with the fetched messages
       } catch (error) {
         console.log('Error fetching messages:', error);
+      } finally {
+        setLoading(false);
       }
     };
   
@@ -99,16 +105,16 @@ export default function CommunityScreen() {
 
   const sendMessage = async () => {
     if (newMessage.trim() !== '') {
+      setLoading(true);
       await addDoc(collection(db, "community"), {
         username: userData.username,
         message: newMessage,
         timestamp: serverTimestamp(), // Use serverTimestamp instead of new Date()
       });
-      setNewMessage(''); // Clear input after sending
+      setNewMessage('');
+      setLoading(false);
     }
   };
-
-
 
   return (
     <View style={styles.container}>
@@ -119,6 +125,11 @@ export default function CommunityScreen() {
         </TouchableOpacity>
         <Text style={styles.headerText}>Community</Text>
       </View>
+      {loading? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size='large' color='#005B41' />
+       </View>
+      ):(<>
 
       {/* Community msgs */}
       <ScrollView style={styles.messageContainer}>
@@ -129,6 +140,7 @@ export default function CommunityScreen() {
           </View>
         ))}
       </ScrollView>
+      </>)}
 
       {/* Message Input Button */}
       <View style={styles.messageInputContainer}>
@@ -151,6 +163,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212', // Dark background
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   header: {
     flexDirection: 'row',

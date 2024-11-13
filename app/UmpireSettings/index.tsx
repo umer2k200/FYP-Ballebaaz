@@ -1,7 +1,6 @@
 import React, { useState,useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, ScrollView, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Dimensions } from 'react-native'; // To use screen width for responsiveness
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, updateDoc, getDocs, query, where, collection ,} from "firebase/firestore";
 import { db } from "@/firebaseConfig";
@@ -32,6 +31,7 @@ export default function UmpireSettings() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -40,6 +40,8 @@ export default function UmpireSettings() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -69,35 +71,35 @@ export default function UmpireSettings() {
   };
 
   const handleUpdate = async () => {
-  //   const phoneRegex = /^03[0-9]{9}$/;
-  // const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
-  // const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
-  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // // Validation for Username
-  // if (username && !usernameRegex.test(username)) {
-  //   setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
-  //   setAlertVisible(true);
-  //   return;
-  // }
+      const phoneRegex = /^03[0-9]{9}$/;
+    const usernameRegex = /^[a-zA-Z0-9_]{5,}$/;
+    const passwordRegex = /^(?=.[A-Za-z])(?=.\d)[A-Za-z\d]{8,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validation for Username
+    if (username && !usernameRegex.test(username)) {
+      setAlertMessage("Username must be at least 5 characters and contain only letters, numbers, and underscores");
+      setAlertVisible(true);
+      return;
+    }
 
-  // // Validation for Phone Number
-  // if (phoneNumber && !phoneRegex.test(phoneNumber)) {
-  //   setAlertMessage("Invalid phone number. It should start with '03' and contain 11 digits.");
-  //   setAlertVisible(true);
-  //   return;
-  // }
+    // Validation for Phone Number
+    if (phoneNumber && !phoneRegex.test(phoneNumber)) {
+      setAlertMessage("Invalid phone number. It should start with '03' and contain 11 digits.");
+      setAlertVisible(true);
+      return;
+    }
 
-  // // Validation for Password
-  // if (password && !passwordRegex.test(password)) {
-  //   setAlertMessage("Password must be at least 8 characters and contain at least one letter and one number.");
-  //   setAlertVisible(true);
-  //   return;
-  // }
-  // if (email && !emailRegex.test(email)) {
-  //   setAlertMessage("Invalid email format.");
-  //   setAlertVisible(true);
-  //   return;
-  // }
+    // Validation for Password
+    if (password && !passwordRegex.test(password)) {
+      setAlertMessage("Password must be at least 8 characters and contain at least one letter and one number.");
+      setAlertVisible(true);
+      return;
+    }
+    if (email && !emailRegex.test(email)) {
+      setAlertMessage("Invalid email format.");
+      setAlertVisible(true);
+      return;
+    }
     try {
       setLoading(true);
       // Get the current user data from AsyncStorage
@@ -172,7 +174,11 @@ export default function UmpireSettings() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
       <Text style={styles.title}>Settings</Text>
-
+      {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
       {/* Username Input */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Username</Text>
@@ -233,7 +239,7 @@ export default function UmpireSettings() {
       <TouchableOpacity style={styles.logoutButton} onPress={logoutButtonPressed}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
-
+      </>)}
       </ScrollView>
       <Modal
         transparent={true}
@@ -305,6 +311,12 @@ export default function UmpireSettings() {
           </View>
         </View>
       </View>
+      <CustomAlert 
+      visible={alertVisible} 
+      message={alertMessage} 
+      onConfirm={handleAlertConfirm} 
+      onCancel={handleAlertConfirm}
+    />
     </View>
     
   );

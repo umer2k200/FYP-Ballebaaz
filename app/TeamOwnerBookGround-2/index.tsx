@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "expo-router";
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Modal, TextInput, Button } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from '@/firebaseConfig'; // Adjust the import according to your structure
 import { collection, getDocs, addDoc, query, where, updateDoc, arrayUnion } from 'firebase/firestore'; // Added 'addDoc'
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import CustomAlert from '@/components/CustomAlert';
 
 
 // Define the Ground interface
@@ -33,6 +33,13 @@ export default function GroundBooking() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [teamOwnerId, setTeamOwnerId] = useState("");
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const handleAlertConfirm = () => {
+    setAlertVisible(false);
+  };
 
 
   const [teamOwnerData, setTeamOwnerData] = useState({
@@ -55,6 +62,7 @@ export default function GroundBooking() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
@@ -65,6 +73,8 @@ export default function GroundBooking() {
         }
       } catch (error) {
         console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
       }
     };
 
@@ -111,6 +121,7 @@ export default function GroundBooking() {
   const confirmBooking = async () => {
     if (TeamId && secondTeamId && bookingDateTime && selectedGround) {
       try {
+        setLoading(true);
         const randomBookingId = generateRandomId();
         // Add a new document in the 'booking' collection
         const bookingRef = await addDoc(collection(db, 'booking'), {
@@ -150,9 +161,12 @@ export default function GroundBooking() {
         setSelectedGround(null);
       } catch (error) {
         console.error("Error creating booking: ", error);
+      } finally{
+        setLoading(false);
       }
     } else {
-      console.log('Please fill in all the details');
+      setAlertMessage('Please fill in all the details.');
+      setAlertVisible(true);
     }
   };
 
@@ -167,6 +181,11 @@ export default function GroundBooking() {
 
           <Text style={styles.pageName}>Ground Booking</Text>
         </View>
+        {loading? (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size='large' color='#005B41' />
+       </View>
+    ):(<>
 
         {grounds.map((ground) => (
           <View key={ground.ground_id} style={styles.groundContainer}>
@@ -202,6 +221,7 @@ export default function GroundBooking() {
             )}
           </View>
         ))}
+        </>)}
 
         <Modal
           animationType="slide"
@@ -256,6 +276,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#121212',
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1e1e1e', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
   },
   header: {
     flexDirection: 'row',
