@@ -1,4 +1,4 @@
-import { db } from "@/firebaseConfig";
+import { db , storage} from "@/firebaseConfig";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   collection,
@@ -28,9 +28,7 @@ import {
   useMicrophonePermissions,
 } from "expo-camera";
 import * as MediaLibrary from "expo-media-library";
-// import RNFS from "react-native-fs";
-// import { FFmpegKit, FFmpegKitConfig } from 'ffmpeg-kit-react-native';
-// import storage from "@react-native-firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface Player {
   name: string;
@@ -123,7 +121,14 @@ export default function MatchDetailsScreen() {
   
   const [isRecording, setIsRecording] = useState(false);
   const highlightContentRef = useRef(false);
+  const boundaryHitRef = useRef(false);
+  const noBallRef = useRef(false);
+  const wideBallRef = useRef(false);
   const [highlightContent, setHighlightContent] = useState(false);
+  const [boundaryHit, setBoundaryHit] = useState(false);
+  const [noBall, setNoBall] = useState(false);
+  const [wideBall, setWideBall] = useState(false);
+
   const [runOnlyFirstTime, setRunOnlyFirstTime] = useState(true);
 
   useEffect(() => {
@@ -170,88 +175,94 @@ export default function MatchDetailsScreen() {
   useEffect(() => {
     highlightContentRef.current = highlightContent;
   }, [highlightContent]); 
+  useEffect(() => {
+    boundaryHitRef.current = boundaryHit;
+  }, [boundaryHit]);
+  useEffect(() => {
+    wideBallRef.current = wideBall;
+  }, [wideBall]);
+  useEffect(() => {
+    noBallRef.current = noBall;
+  }, [noBall]);
   
-  // const mergeVideos = async (playerId : string, videoUris: string[]) => {
-  //   try{
-  //     if ( videoUris.length < 1 ){
-  //       console.log("No videos for player with id:", playerId);
-  //       return null;
-  //     }
-  //     const cacheDirectory = RNFS.CacheDirectoryPath;
-  //     if (!cacheDirectory){
-  //       console.error("Caches directory is null.")
-  //       return;
-  //     }
-  //     const fileList = videoUris.map((uri) => `file '${uri}'`).join("\n");
-  //     const filePath = `${RNFS.CachesDirectoryPath}/filelist.txt`;
-  //     await RNFS.writeFile(filePath, fileList, "utf8");
-  //     const outputFilePath = `${RNFS.CachesDirectoryPath}/${playerId}_${Date.now()}.mp4`;
-  //     const command = `-f concat -safe 0 -i ${filePath} -c copy ${outputFilePath}`;
-  //     await FFmpegKit.execute(command);
-  //     return outputFilePath;
-  //   }
-  //   catch(err){
-  //     console.error("Error in mergeVideos", err);
-  //   }
-  // };
-
-  // const uploadToFirebase = async (filePath: string, playerId: string) => {
-  //   const fileName = `${playerId}_${Date.now()}.mp4`;
-  //   const reference = storage().ref(`highlights/${fileName}`);
-  //   await reference.putFile(filePath);
-  //   const downloadUrl = await reference.getDownloadURL();
-  //   console.log("Uploaded video for player "+ playerId + " is: " + downloadUrl);
-  //   return downloadUrl;
-  // };
-
-  // const process = async () => {
-  //   for (const player_id of Object.keys(playerHighlights)) {
-  //     const videoUris = playerHighlights[player_id];
-  //     console.log("Processing videos for player with id:", player_id);
-  //     const mergedVideoPath = await mergeVideos(player_id, videoUris);
-  //     if (mergedVideoPath) {
-  //       const downloadUrl = await uploadToFirebase(mergedVideoPath, player_id);
-  //       console.log("Download URL:", downloadUrl);
-  //     }
-  //   }
-  //   console.log("All player highlights processed!")
-  // };
 
   const startRecording = async () => {
     console.log("Start recording function executing...");
     const Hvideo = await cameraRef.current.recordAsync();
     console.log("Video:", Hvideo.uri);
     if (highlightContentRef.current) {
-      // const asset = await MediaLibrary.createAssetAsync(video.uri);
-      // console.log("Asset:", asset);
-      setHighlightContent(false);
-      setPlayerHighlights((prevHighlights) => {
-        const player_id = strikerBatsman?.player_id;
-        if (player_id) {
-          return {
-            ...prevHighlights,
-            [player_id]: [...(prevHighlights[player_id] ?? []), Hvideo.uri],
-          };
+      try{
+        let storageRef;
+        let storageRef2;
+        let storageRef3;
+        let playerID;
+        let teamID;
+        let playerID2;
+        let teamID2;
+        if (strikerBatsman?.battingOut){
+          console.log("Storageref for 1st condition");
+          storageRef = ref(storage, `highlights/players/${currentBowler?.player_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          storageRef2 = ref(storage, `highlights/teams/${bowlingTeam?.team_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          playerID = currentBowler?.player_id;
+          teamID = bowlingTeam?.team_id;
+          teamID2 = battingTeam?.team_id;
+          //add for batsman --- pending
         }
-        return prevHighlights;
-      });
-      setTeamHighlights((prevHighlights) => {
-        const team_id = battingTeam?.team_id;
-        if (team_id) {
-          return {
-            ...prevHighlights,
-            [team_id]: [...(prevHighlights[team_id] ?? []), Hvideo.uri],
-          };
+        else if ( noBallRef.current || wideBallRef.current ){
+          console.log("Storageref for 2nd condition");
+          storageRef = ref(storage, `highlights/players/${currentBowler?.player_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          storageRef2 = ref(storage, `highlights/teams/${bowlingTeam?.team_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          playerID = currentBowler?.player_id;
+          teamID = bowlingTeam?.team_id;
+          teamID2 = battingTeam?.team_id;
         }
-        return prevHighlights;
-      });
-      setMatchHighlights((prevHighlights) => [...prevHighlights, Hvideo.uri]);
-      console.log("Highlights:", playerHighlights, teamHighlights, matchHighlights);
+        else if ( boundaryHitRef.current){
+          console.log("Storageref for 3rd condition");
+          storageRef = ref(storage, `highlights/players/${strikerBatsman?.player_id}/${matchId}/batting/${battingTeam!.battingoversPlayed * 10}.mp4`);
+          storageRef2 = ref(storage, `highlights/teams/${battingTeam?.team_id}/${matchId}/batting/${battingTeam!.battingoversPlayed * 10}.mp4`);
+          playerID = strikerBatsman?.player_id;
+          teamID = battingTeam?.team_id;
+        }
+        else{
+          console.log("Storageref for 4th condition");
+          storageRef = ref(storage, `highlights/players/${currentBowler?.player_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          storageRef2 = ref(storage, `highlights/teams/${bowlingTeam?.team_id}/${matchId}/bowling/${bowlingTeam!.bowlingOvers * 10}.mp4`);
+          playerID = currentBowler?.player_id;
+          teamID = bowlingTeam?.team_id;
+          teamID2 = battingTeam?.team_id;
+        }
+
+        if(teamID2){
+          storageRef3 = ref(storage, `highlights/teams/${teamID2}/${matchId}/batting/${battingTeam!.battingoversPlayed * 10}.mp4`);
+        }
+        
+        //upload video to storage
+        const response = await fetch(Hvideo.uri);
+        const blob = await response.blob();
+
+        const uploadTask1 = uploadBytes(storageRef, blob).then(() => getDownloadURL(storageRef));
+        const uploadTask2 = uploadBytes(storageRef2, blob).then(() => getDownloadURL(storageRef2));
+        let uploadTasks = [uploadTask1, uploadTask2];
+
+        if (storageRef3) {
+          uploadTasks.push(uploadBytes(storageRef3, blob).then(() => getDownloadURL(storageRef3)));
+        }
+        //get downloaded url
+        const urls = await Promise.all(uploadTasks);
+        console.log("Videos uploaded to storage for :", urls);
+
+        setHighlightContent(false);
+        setBoundaryHit(false);
+        setNoBall(false);
+        setWideBall(false);
+      } catch (e) {
+        console.error("Error uploading video:", e);
+      }
     } else {
       console.log("No highlights");
     }
   };
-  
+
   const stopRecording = async () => {
     console.log("Stop recording function executing...");
     await cameraRef.current?.stopRecording();
@@ -271,6 +282,7 @@ export default function MatchDetailsScreen() {
   const callbattingAddFourRuns = async () => {
     await battingAddFourRuns();
     displaySelected();
+    setBoundaryHit(true);
     setHighlightContent(true);
     setIsRecording(false); //true to false
   };
@@ -1634,6 +1646,7 @@ export default function MatchDetailsScreen() {
   const callbattingAddSixRuns = async () => {
     await battingAddSixRuns();
     displaySelected();
+    setBoundaryHit(true);
     setHighlightContent(true);
     setIsRecording(false); //true to false
   };
@@ -1977,6 +1990,7 @@ export default function MatchDetailsScreen() {
 
   const handleWideButtonPress = () => {
     setWideModalVisible(true);
+    setWideBall(true);
   };
 
   const battingAddWideRuns = async () => {
@@ -2436,6 +2450,7 @@ export default function MatchDetailsScreen() {
 
   const handleNoBallButtonPress = () => {
     setNoBallModalVisible(true);
+    setNoBall(false);
   };
 
   const battingNoBall = async () => {
@@ -3689,7 +3704,7 @@ export default function MatchDetailsScreen() {
               <Text style={styles.gridItem} onPress={handleWideButtonPress}>
                 Wide
               </Text>
-              <Text style={styles.gridItem}>DRS</Text>
+              <Text style={styles.gridItem} >DRS</Text>
             </View>
           </View>
 

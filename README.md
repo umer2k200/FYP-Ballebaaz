@@ -36,11 +36,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install react-native-image-picker
    npm install expo-camera
    npm install expo-media-library
-   npm install react-native-vision-camera
    npm install react-native-reanimated react-native-screens react-native-gesture-handler react-native-safe-area-context react-native-vector-icons react-native-permissions
    npm install react-native-ffmpeg
-   npm install react-native-fs
-   npm install expo-file-system
+   npm install -g firebase-tools
 
    ```
 

@@ -20,6 +20,7 @@ const RootLayout = () => {
             <Stack.Screen name='PlayerDrills/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerFitness/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerHighlightsPage/index' options={{headerShown:false}} />
+            <Stack.Screen name='PlayerHighlightsPage2/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerCommunity/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerSettings/index' options={{headerShown:false}} />
             <Stack.Screen name='PlayerSettingsAttributes/index' options={{headerShown:false}} />

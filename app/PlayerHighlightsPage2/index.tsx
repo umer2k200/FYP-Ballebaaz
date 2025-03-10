@@ -1,113 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { db } from '@/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-
-interface match {
-  dateTime: string;
-  ground_id: string;
-  match_id: string;
-  highlights: string[];
-  team1: string;
-  team2: string;
-  result: string;
-  umpire_id: string;
-}
+import { doc, collection, getDocs, query, where } from 'firebase/firestore';
 
 export default function PlayerHighlightsScreen() {
   const router = useRouter();
-  const [matchesList, setMatchesList] = useState<match[]>([]);
-  const [userData, setUserData] = useState({
-      name: '',
-      username: '',
-      phone_no: '',
-      role: "",
-      password: '',
-      player_id: '', 
-      fitness_status: "",
-      matches_played: 0,
-      best_bowling: "",
-      highlights: [],
-      team_id: "",
-      preferred_hand: "",
-      bowling_hand: "",
-      training_sessions: [],
-      assigned_drills: "",
-      weight: 0,
-      height: 0,
-      age: 0,
-      email: "",
-      fiveWickets: 0,
-      requestAccepted: false,
-      runsScored : 0,
-      ballsFaced : 0,
-      battingAverage : 0,
-      battingStrikeRate : 0,
-      noOfTimesOut : 0,
-      centuries : 0,
-      halfCenturies : 0,
-      oversBowled : 0,
-      ballsBowled : 0,
-      runsConceded : 0,
-      wicketsTaken : 0,
-      bowlingAverage : 0,
-      economyRate : 0,
-      bowlingStrikeRate : 0,
-      profile_pic: '',
-      maidenOvers: 0,
-    });
-
-    useEffect(() => {
-      const fetchUserData = async () => {
-        try {
-          const storedUserData = await AsyncStorage.getItem("userData");
-          if (storedUserData) {
-            const parsedUserData = JSON.parse(storedUserData);
-            console.log("Fetched User Data:", parsedUserData); // Debugging
-            setUserData(parsedUserData);
-          }
-        } catch (error) {
-          console.log("Error fetching user data:", error);
-        }
-      };
-  
-      fetchUserData();
-    }, []);
-
-    useEffect(() => {
-        if (userData.team_id) {
-          fetchMatchIDs();
-        }
-      }, [userData.team_id]);
-
-    const fetchMatchIDs = async () => {
-      try{
-        const teamID = userData.team_id;
-        const matchCollectionRef = collection(db, 'match');
-        const q1 = query(matchCollectionRef, where('team1', '==', teamID), where('result', '==', 'completed'));
-        const q2 = query(matchCollectionRef, where('team2', '==', teamID), where('result', '==', 'completed'));
-        const [querySnapshot1, querySnapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        const matches: match[] = [];
-        querySnapshot1.forEach((doc) => {
-          matches.push(doc.data() as match);
-        }
-        );
-        querySnapshot2.forEach((doc) => {
-          matches.push(doc.data() as match);
-        }
-        );
-        console.log("Fetched Matches:", matches); 
-        setMatchesList(matches);
-      }    
-      catch (error) {
-        console.log("Error fetching matches:", error);
-      }
-      finally{
-        //setloading(false);
-      }
-    };
+  const { match_id, player_id } = useLocalSearchParams();
 
   return (
     <View style={styles.container}>
@@ -116,33 +16,10 @@ export default function PlayerHighlightsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Image source={require('@/assets/images/back_arrow.png')} style={styles.backIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Your Highlights</Text>
+        <Text style={styles.headerText}>Highlights</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
 
-      {matchesList.length === 0 ? (
-          <Text style={styles.videoTitle}>No matches found.</Text>
-        ) : (
-          matchesList.map((match, index) => (
-            <TouchableOpacity 
-              style={styles.videoContainer} 
-              key={index} 
-              onPress={() => router.push({ pathname: '/PlayerHighlightsPage2/index', params: { match_id: match.match_id, player_id : userData.player_id } })}
-            >
-              <Text style={styles.videoTitle}>Match {index + 1}</Text>
-              <Text style={styles.videoTitle2}>Match ID: {match.match_id}</Text>
-              <Text style={styles.videoTitle2}>vs: {match.team1 === userData.team_id? match.team2: match.team1}</Text>
-              <Text style={styles.videoTitle2}>Location: {match.ground_id !== ''? match.ground_id: 'Not found'}</Text>
-              <Text style={styles.videoTitle2}>Date: {match.dateTime}</Text>
-              <TouchableOpacity
-                      style={styles.matchesButton}
-                      onPress={() => router.push("/PlayerHighlightsPage2/index")}
-                    >
-                      <Text style={styles.matchesButtonText}>View Highlights</Text>
-                    </TouchableOpacity>
-            </TouchableOpacity>
-          ))
-      )}
       </ScrollView>
 
       {/* Fancy Navbar */}
@@ -259,20 +136,6 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginBottom: 10,
     color: 'white',
-  },
-  matchesButton: {
-    backgroundColor: "#005B41", // Blue color for the Attributes button
-    padding: 10,
-    borderRadius: 50,
-    alignItems: "center",
-    marginVertical: 5,
-    width: "85%",
-    alignSelf: "center",
-  },
-  matchesButtonText: {
-    fontSize: 15,
-    color: "#fff",
-    fontWeight: "bold",
   },
   video: {
     width: '100%',
