@@ -5,6 +5,7 @@ import { db } from '@/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
+
 interface match {
   dateTime: string;
   ground_id: string;
@@ -18,6 +19,7 @@ interface match {
 
 export default function PlayerHighlightsScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [matchesList, setMatchesList] = useState<match[]>([]);
   const [userData, setUserData] = useState({
       name: '',
@@ -62,6 +64,7 @@ export default function PlayerHighlightsScreen() {
     useEffect(() => {
       const fetchUserData = async () => {
         try {
+          setLoading(true);
           const storedUserData = await AsyncStorage.getItem("userData");
           if (storedUserData) {
             const parsedUserData = JSON.parse(storedUserData);
@@ -70,6 +73,8 @@ export default function PlayerHighlightsScreen() {
           }
         } catch (error) {
           console.log("Error fetching user data:", error);
+        } finally {
+          setLoading(false);
         }
       };
   
@@ -84,6 +89,7 @@ export default function PlayerHighlightsScreen() {
 
     const fetchMatchIDs = async () => {
       try{
+        setLoading(true);
         const teamID = userData.team_id;
         const matchCollectionRef = collection(db, 'match');
         const q1 = query(matchCollectionRef, where('team1', '==', teamID), where('result', '==', 'completed'));
@@ -105,7 +111,7 @@ export default function PlayerHighlightsScreen() {
         console.log("Error fetching matches:", error);
       }
       finally{
-        //setloading(false);
+        setLoading(false);
       }
     };
 
@@ -118,6 +124,11 @@ export default function PlayerHighlightsScreen() {
         </TouchableOpacity>
         <Text style={styles.headerText}>Your Highlights</Text>
       </View>
+      { loading? (
+        <View style={styles.loaderContainer}>
+                  <ActivityIndicator size='large' color='#005B41' />
+              </View>
+      ):(<>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
 
       {matchesList.length === 0 ? (
@@ -127,7 +138,6 @@ export default function PlayerHighlightsScreen() {
             <TouchableOpacity 
               style={styles.videoContainer} 
               key={index} 
-              onPress={() => router.push({ pathname: '/PlayerHighlightsPage2/index', params: { match_id: match.match_id, player_id : userData.player_id } })}
             >
               <Text style={styles.videoTitle}>Match {index + 1}</Text>
               <Text style={styles.videoTitle2}>Match ID: {match.match_id}</Text>
@@ -136,7 +146,7 @@ export default function PlayerHighlightsScreen() {
               <Text style={styles.videoTitle2}>Date: {match.dateTime}</Text>
               <TouchableOpacity
                       style={styles.matchesButton}
-                      onPress={() => router.push("/PlayerHighlightsPage2/index")}
+                      onPress={() => router.push({ pathname: '/PlayerHighlightsPage2', params: { match_id: match.match_id, player_id : userData.player_id } })}
                     >
                       <Text style={styles.matchesButtonText}>View Highlights</Text>
                     </TouchableOpacity>
@@ -144,6 +154,7 @@ export default function PlayerHighlightsScreen() {
           ))
       )}
       </ScrollView>
+      </>)}
 
       {/* Fancy Navbar */}
       <View style={styles.navbar}>
@@ -197,6 +208,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#121212', // Light grayish background for a professional look
   },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex:1000,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -241,8 +259,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5, // Adds shadow for Android
-    width: '90%', // Ensures video container covers 100% of the screen width
-  },
+    width: '100%', // Ensures video container covers 100% of the screen width
+    height: 250, // Set a fixed height for consistency (adjust as needed)
+    alignItems: 'center',
+   },
   videoTitle: {
     fontSize: 22,
     fontWeight: 'bold',

@@ -6,9 +6,9 @@ import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { Video, ResizeMode } from 'expo-av';
 import CustomAlert from '@/components/CustomAlert';
 
-export default function PlayerHighlightsScreen2() {
+export default function TeamOwnerHighlightsScreen2() {
   const router = useRouter();
-  const { match_id, player_id } = useLocalSearchParams();
+  const { match_id, team_id } = useLocalSearchParams();
   const [selectedTab , setSelectedTab] = useState<'batting' | 'bowling'>('batting');
   const [battingHighlights, setBattingHighlights] = useState<string[]>([]);
   const [bowlingHighlights, setBowlingHighlights] = useState<string[]>([]);
@@ -18,7 +18,7 @@ export default function PlayerHighlightsScreen2() {
   const [alertMessage, setAlertMessage] = useState("");
   useEffect(() => {
     fetchHighlights();
-  }, [match_id,player_id,selectedTab]);
+  }, [match_id,team_id,selectedTab]);
 
   useEffect(() => {
     setCurrentVideoIndex(0);
@@ -27,7 +27,7 @@ export default function PlayerHighlightsScreen2() {
   const fetchHighlights = async () => {
     setLoading(true);
     try{
-      const path = selectedTab === 'batting' ? `highlights/players/${player_id}/${match_id}/batting/` : `highlights/players/${player_id}/${match_id}/bowling/`;
+      const path = selectedTab === 'batting' ? `highlights/teams/${team_id}/${match_id}/batting/` : `highlights/teams/${team_id}/${match_id}/bowling/`;
       console.log('Fetching highlights from path:', path);
       const storageRef = ref(storage, path);
       const result = await listAll(storageRef);

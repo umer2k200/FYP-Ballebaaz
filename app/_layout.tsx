@@ -34,6 +34,7 @@ const RootLayout = () => {
             <Stack.Screen name='TeamOwnerCommunity/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerGenerateKit/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerHighlightsPage/index' options={{headerShown:false}} />
+            <Stack.Screen name='TeamOwnerHighlightsPage2/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerHireCoach/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerHomeScreen/index' options={{headerShown:false}} />
             <Stack.Screen name='TeamOwnerTeamsRanking/index' options={{headerShown:false}} />
