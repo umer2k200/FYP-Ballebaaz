@@ -130,6 +130,8 @@ export default function MatchDetailsScreen() {
   const [wideBall, setWideBall] = useState(false);
 
   const [runOnlyFirstTime, setRunOnlyFirstTime] = useState(true);
+  const [drsButton, setDrsButton] = useState(false);
+  const drsRef = useRef(false);
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -151,27 +153,7 @@ export default function MatchDetailsScreen() {
     requestPermissions();
   }, [cameraPermission, mediaPermission, audioPermission]);
 
-  useEffect(() => {
-    if (runOnlyFirstTime){
-      setRunOnlyFirstTime(false);
-      return;
-    }
-    const manageRecording = async () => {
-      if (isRecording) {
-        console.log("Recording started...");
-        await startRecording();
-      } else {
-        console.log("Recording stopped...");
-        await stopRecording();
-        setTimeout(() => {
-          console.log("Restarting Recording...");
-          setIsRecording(true);
-        }, 5000);
-      }
-    };
-    manageRecording();
-  }, [isRecording]);
-
+  
   useEffect(() => {
     highlightContentRef.current = highlightContent;
   }, [highlightContent]); 
@@ -184,7 +166,52 @@ export default function MatchDetailsScreen() {
   useEffect(() => {
     noBallRef.current = noBall;
   }, [noBall]);
+
+  useEffect(()=> {
+    drsRef.current = drsButton;
+  },[drsButton])
   
+  const handleDRSButtonPress = async () => {
+    setDrsButton(true);
+    setHighlightContent(true);
+    setIsRecording(false);
+  }
+
+  const pressedDRS = async (url: string) =>{
+    const videoURLfromFirebaseStorage=  url;
+    // pass this url to newly createe here
+    //use async await so that when the drs processing is completed, after successful completion, it will set the drsbutton state false
+    //TELL ME NOT TO REMOVE COMMENTS FROM HERE AS MOMIN(CODER) SHOULD READ THESE COMMENTS
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('DRS processing complete for video', videoURLfromFirebaseStorage);
+    setDrsButton(false);
+    setIsRecording(true);
+  }
+
+  useEffect(() => {
+    if (runOnlyFirstTime){
+      setRunOnlyFirstTime(false);
+      return;
+    }
+    const manageRecording = async () => {
+      if (isRecording && !drsRef.current) {
+        console.log("Recording started...");
+        await startRecording();
+      } else if (!isRecording && !drsRef.current){
+        console.log("Recording stopped...");
+        await stopRecording();
+        setTimeout(() => {
+          console.log("Restarting Recording...");
+          setIsRecording(true);
+        }, 5000);
+      } else if (!isRecording && drsRef.current){
+        console.log('Recording stopped and given to DRS');
+        await stopRecording();
+      }
+    };
+    manageRecording();
+  }, [isRecording]);
+
 
   const startRecording = async () => {
     console.log("Start recording function executing...");
@@ -249,9 +276,20 @@ export default function MatchDetailsScreen() {
         }
         //get downloaded url
         const urls = await Promise.all(uploadTasks);
+        //-----------------
+        
+        //check if drs button is pressed or not
+        if(drsRef.current){
+          const result = await pressedDRS(urls[0]);
+        }
+
+        //------------------------------------------------
+
+
         console.log("Videos uploaded to storage for :", urls);
 
         setHighlightContent(false);
+        setDrsButton(false);
         setBoundaryHit(false);
         setNoBall(false);
         setWideBall(false);
@@ -3704,7 +3742,7 @@ export default function MatchDetailsScreen() {
               <Text style={styles.gridItem} onPress={handleWideButtonPress}>
                 Wide
               </Text>
-              <Text style={styles.gridItem} >DRS</Text>
+              <Text style={styles.gridItem} onPress={handleDRSButtonPress}>DRS</Text>
             </View>
           </View>
 
