@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { db } from '@/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { Modal } from 'react-native';
 
 interface match {
   dateTime: string;
@@ -89,6 +90,11 @@ export default function TeamHighlightsScreen() {
       }
     };
 
+    const [isModalVisible, setModalVisible] = useState(false);
+    const toggleModal = () => {
+      setModalVisible(!isModalVisible);
+    };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -131,6 +137,89 @@ export default function TeamHighlightsScreen() {
       </>)}
 
       {/* Fancy Navbar */}
+            <View style={styles.navbar}>
+              <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerDrills')}>
+                <Image
+                  source={require('@/assets/images/drills.png')}
+                  style={styles.navIcon}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerBookGround-2')}>
+                <Image
+                  source={require('@/assets/images/stadium.png')}
+                  style={styles.navIcon}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerHomeScreen')}>
+                <Image
+                  source={require('@/assets/images/home.png')}
+                  style={styles.navIcon}
+                />
+              </TouchableOpacity>
+      
+              <TouchableOpacity style={styles.navItem} onPress={() => router.push('/TeamOwnerTeamsRanking')}>
+                <Image
+                  source={require('@/assets/images/ranking.png')}
+                  style={styles.navIcon}
+                />
+              </TouchableOpacity>
+      
+              <TouchableOpacity style={styles.navItem} onPress={toggleModal}>
+                <View style={styles.highlight}>
+                  <Image
+                    source={require('@/assets/images/more.png')}
+                    style={styles.navIcon}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Modal for expanded navigation */}
+                  <Modal
+                    visible={isModalVisible}
+                    transparent={true}
+                    animationType="slide"
+                    onRequestClose={toggleModal}
+                  >
+                    <View style={styles.modalContainer}>
+                      <View style={styles.expandedNavbar}>
+                        <TouchableOpacity style={styles.navItemExpanded} onPress={() => { toggleModal(); router.push('/TeamOwnerGenerateKit'); }}>
+                          <Image
+                            source={require('@/assets/images/kit.png')}
+                            style={styles.navIcon}
+                          />
+                          <Text style={styles.expandedNavText}>AI Kit Generation</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.navItemExpanded} onPress={() => { toggleModal(); router.push('/TeamOwnerCommunity'); }}>
+                          <Image
+                            source={require('@/assets/images/community.png')}
+                            style={styles.navIcon}
+                          />
+                          <Text style={styles.expandedNavText}>Community</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.navItemExpanded} onPress={() => { toggleModal(); router.push('/TeamOwnerHighlightsPage'); }}>
+                          <Image
+                            source={require('@/assets/images/cloud.png')}
+                            style={styles.navIcon}
+                          />
+                          <Text style={styles.expandedNavText}>Highlights</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.navItemExpanded} onPress={() => { toggleModal(); router.push('/TeamOwnerSettings'); }}>
+                          <Image
+                            source={require('@/assets/images/settings.png')}
+                            style={styles.navIcon}
+                          />
+                          <Text style={styles.expandedNavText}>Settings</Text>
+                        </TouchableOpacity>
+            
+                        {/* Close button */}
+                        <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+                          <Text style={styles.closeButtonText}>Close</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
 
     </View>
   );
@@ -223,5 +312,85 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 16 / 9, // Set a 16:9 aspect ratio for responsive video scaling
     borderRadius: 10,
+  },
+  highlight: {
+    position: 'absolute',
+    bottom: 35, // Slightly raised pop-up effect
+    backgroundColor: '#005B41', // Teal highlight
+    borderRadius: 50,
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#00e676', // Bright shadow effect for the highlight
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 10,
+    borderColor: '#1e1e1e',  // Darker border color for contrast
+    borderWidth: 5,
+  },
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingRight: 30,
+    backgroundColor: '#1e1e1e', // Dark navbar background
+    paddingVertical: 7,
+    borderTopLeftRadius: 50, // Extra rounded top corners for a sleek look
+    borderTopRightRadius: 50,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  navItem: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  navIcon: {
+    width: 35,
+    height: 35,
+    tintColor: '#fff', // Make icons white
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+
+  },
+  expandedNavbar: {
+    width: '50%',
+    backgroundColor: '#1e1e1e',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  navItemExpanded: {
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  expandedNavText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  closeButton: {
+    backgroundColor: '#005B41',
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    marginTop: 15,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 18,
   },
 });

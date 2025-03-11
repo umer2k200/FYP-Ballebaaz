@@ -40,6 +40,9 @@ type Match={
   team1: string;
   team2: string;
   umpire_id: string;
+  ground_id2: string;
+  team1_id: string;
+  team2_id: string;
 };
 
 interface TeamData {
@@ -59,12 +62,16 @@ interface TeamData {
 }
 
 const UmpireScreen = () => {
-    const router = useRouter();
+  
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(null);
   const [username, setUsername] = useState('Aleem Daar');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState("");
+  const [groundID, setGroundID] = useState("");
+  const [team1ID, setTeam1ID] = useState("");
+  const [team2ID, setTeam2ID] = useState("");
   
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -72,10 +79,7 @@ const UmpireScreen = () => {
   const [matchData, setMatchData] = useState<Match[]>([]);
   const [teamData, setteamData] = useState<TeamData[]>([]);
 
-  const handleMatchPress = () => {
-    router.push('/MatchDetails');
-  };
-
+ 
   const handleViewAllPress = () => {
     router.push('/UmpireUpcomingMatches');
   };
@@ -90,6 +94,9 @@ const UmpireScreen = () => {
     matches_officiated:[],
   });
 
+  useEffect(() => {
+    console.log("Ground ID:", groundID); // Debugging
+  }, [groundID]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -113,6 +120,7 @@ const UmpireScreen = () => {
     
 
   }, []);
+
   const fetchMatchData = async () => {
     setLoading(true); // Start loading
     try {
@@ -143,6 +151,9 @@ const UmpireScreen = () => {
                 team1: t1D,
                 team2: t2D,
                 umpire_id: Usdata.umpire_id,
+                ground_id2: Usdata.ground_id,
+                team1_id: Usdata.team1,
+                team2_id: Usdata.team2,
               };
             })
           );
@@ -217,36 +228,13 @@ const UmpireScreen = () => {
     const handleAlertConfirm = () => {
       setAlertVisible(false);
     };
-    
 
-    // Helper function to fetch team details from the team collection
-  
-  
-
-
-  const handleLogout = async () => {
-    try {
-      setLoading(true);
-      await AsyncStorage.removeItem("userData"); // Clear user data
-      
-      setTimeout(() => {
-        router.push("/Login");
-        setLoading(false);
-      }, 2000);
-      
-    } catch (error) {
-      console.error("Error logging out:", error);
-      setAlertMessage("Error logging out");
-      setAlertVisible(true);
-      
-    }
-  };
 
 const renderMatchItem = ({ item }: { item: Match }) => {
   if (!item) return null;
 
   return (
-    <TouchableOpacity onPress={() => handleMatchPress()} style={styles.matchContainer}>
+    <TouchableOpacity onPress={() => router.push({ pathname:'/MatchDetails', params: { matchData: JSON.stringify(item) } })} style={styles.matchContainer}>
       <View style={styles.matchDetails}>
         <Text style={styles.matchTitle}>{item.team1} vs {item.team2}</Text>
         <Text style={styles.matchInfo}>Date: {item.dateTime}</Text>
@@ -288,7 +276,7 @@ return (
   ListEmptyComponent={<Text style={styles.noMatchesText}>No matches available.</Text>}
   onEndReachedThreshold={0.5} // To handle large datasets if needed
 />
-
+ 
 
        {/* Bottom Navigation */}
        <View style={styles.navbar}>
