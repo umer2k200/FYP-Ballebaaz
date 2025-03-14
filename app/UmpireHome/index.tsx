@@ -83,6 +83,7 @@ const UmpireScreen = () => {
   const handleViewAllPress = () => {
     router.push('/UmpireUpcomingMatches');
   };
+  
   const [userData, setUserData] = useState({
     name: "",
     username: "",
@@ -270,12 +271,12 @@ return (
 
     
     <FlatList
-  data={matchData}
-  renderItem={renderMatchItem}
-  keyExtractor={(item) => item.match_id}
-  ListEmptyComponent={<Text style={styles.noMatchesText}>No matches available.</Text>}
-  onEndReachedThreshold={0.5} // To handle large datasets if needed
-/>
+      data={matchData}
+      renderItem={renderMatchItem}
+      keyExtractor={(item) => item.match_id}
+      ListEmptyComponent={<Text style={styles.noMatchesText}>No matches available.</Text>}
+      onEndReachedThreshold={0.5} // To handle large datasets if needed
+    />
  
 
        {/* Bottom Navigation */}

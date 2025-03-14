@@ -215,7 +215,7 @@ const MatchDetailsScreen = () => {
   );
 
   const handleArrowPress = () => {
-    router.push('/UmpireHome');
+    router.back();
   };
 
   return (
