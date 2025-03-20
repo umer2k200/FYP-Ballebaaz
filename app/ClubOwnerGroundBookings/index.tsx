@@ -47,6 +47,15 @@ export default function ClubOwnerGroundBookings() {
     setAlertVisible(false);
   };
 
+  const filterBookingsByDate = (bookings: Booking[], searchDate: string) => {
+    if (!searchDate) return bookings; // If no search date, return all bookings
+  
+    return bookings.filter((booking) => {
+      // Check if the searchDate is a substring of the booking's dateTime
+      return booking.dateTime.includes(searchDate);
+    });
+  };
+
   const [clubOwnerData, setclubOwnerData] = useState({
     clubOwner_id: "",
     clubOwner_name: "",
@@ -193,7 +202,7 @@ export default function ClubOwnerGroundBookings() {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by date (YYYY-MM-DD)"
+          placeholder="Search by date"
           placeholderTextColor="#888"
           value={searchDate}
           onChangeText={(text) => setSearchDate(text)}
@@ -206,7 +215,7 @@ export default function ClubOwnerGroundBookings() {
       ) : (
         <>
           <ScrollView contentContainerStyle={styles.scrollContainer}>
-            {bookingsList.map((booking) => (
+            {filterBookingsByDate(bookingsList, searchDate).map((booking) => (
               <TouchableOpacity
                 key={booking.booking_id}
                 style={styles.bookingCard}
@@ -237,7 +246,6 @@ export default function ClubOwnerGroundBookings() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-
           {modalVisible && selectedBooking && (
             <View style={styles.modalContainer}>
               <View style={styles.modalView}>

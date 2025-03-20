@@ -115,13 +115,13 @@ export default function ClubOwnerHomeScreen() {
 
           // Update the ground details state
           setGroundDetails({
-            ground_id: groundData.ground_id,
-            name: groundData.name,
-            location: groundData.location,
-            availibility: groundData.availibility,
-            capacity: groundData.capacity,
-            revenue: groundData.revenue,
-            pic:groundData.pic,
+            ground_id: groundData.ground_id || "",
+            name: groundData.name || "",
+            location: groundData.location || "", 
+            availibility: groundData.availibility || "",
+            capacity: groundData.capacity || 0,
+            revenue: groundData.revenue || 0,
+            pic:groundData.pic || "",
           });
           setGroundExists(true);
         });
@@ -162,6 +162,8 @@ export default function ClubOwnerHomeScreen() {
               <Image
                 source={groundDetails.pic?{uri:groundDetails.pic}:require('@/assets/images/gwadarcricketground.jpg')} // Default ground image
                 style={styles.groundImage}
+                resizeMode="cover"
+                onError={(error)=> console.log("Error loading image:",error.nativeEvent.error)}
               />
               <Text style={styles.cardText}>
                 Ground Name: {groundDetails.name}

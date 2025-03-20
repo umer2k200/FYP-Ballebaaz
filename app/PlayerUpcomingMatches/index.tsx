@@ -31,10 +31,8 @@ type Match={
   team2_id: string;
 };
 
-
 export default function UpcomingMatchesScreen() {
   const router = useRouter();
-  const [groundID, setGroundID] = useState('');
   const [loading, setLoading] = useState(false);
   const [matchData, setMatchData] = useState<Match[]>([]);
   const [teamExists, setTeamExists] = useState(false);
@@ -78,9 +76,6 @@ export default function UpcomingMatchesScreen() {
       profile_pic:'',
     });
 
-    useEffect(() => {
-      console.log("Ground ID:", groundID); // Debugging
-    }, [groundID]);
 
     useEffect(() => {
       const fetchUserData = async () => {
@@ -141,57 +136,107 @@ export default function UpcomingMatchesScreen() {
         const q1 = query(matchCollectionRef, where("team1", "==", teamID),where("result", "==", "pending"));
         const q2 = query(matchCollectionRef, where("team2", "==", teamID),where("result", "==", "pending"));
         const [querySnapshot1, querySnapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        const matches: Match[] = [];
-        if(!querySnapshot1.empty){
-          const matchArray1 = await Promise.all(
-            querySnapshot1.docs.map(async (doc) => {
-              const Usdata = doc.data();
-              const t1D = await getTeamDetails(Usdata.team1);
-              const t2D = await getTeamDetails(Usdata.team2);
-              const grounds = await getGroundDetails(Usdata.ground_id);
+        // const matches: Match[] = [];
+        // if(!querySnapshot1.empty){
+        //   const matchArray1 = await Promise.all(
+        //     querySnapshot1.docs.map(async (doc) => {
+        //       const Usdata = doc.data();
+        //       const t1D = await getTeamDetails(Usdata.team1);
+        //       const t2D = await getTeamDetails(Usdata.team2);
+        //       const grounds = await getGroundDetails(Usdata.ground_id);
               
-              return {
-                dateTime: Usdata.dateTime,
-                ground_id: grounds,
-                highlights: Usdata.highlights || [],
-                match_id: Usdata.match_id,
-                result: Usdata.result,
-                team1: t1D,
-                team2: t2D,
-                umpire_id: Usdata.umpire_id,
-                ground_id2: Usdata.ground_id,
-                team1_id: Usdata.team1,
-                team2_id: Usdata.team2,
-              };
-            })
-          );
-          setMatchData(matchArray1); // Set the fetched matches
-        }
-        if(!querySnapshot2.empty){
-          const matchArray2 = await Promise.all(
-            querySnapshot2.docs.map(async (doc) => {
-              const Usdata = doc.data();
-              const t1D = await getTeamDetails(Usdata.team1);
-              const t2D = await getTeamDetails(Usdata.team2);
-              const grounds = await getGroundDetails(Usdata.ground_id);
+        //       return {
+        //         dateTime: Usdata.dateTime,
+        //         ground_id: grounds,
+        //         highlights: Usdata.highlights || [],
+        //         match_id: Usdata.match_id,
+        //         result: Usdata.result,
+        //         team1: t1D,
+        //         team2: t2D,
+        //         umpire_id: Usdata.umpire_id,
+        //         ground_id2: Usdata.ground_id,
+        //         team1_id: Usdata.team1,
+        //         team2_id: Usdata.team2,
+        //       };
+        //     })
+        //   );
+        //   setMatchData(matchArray1); // Set the fetched matches
+        // }
+        // if(!querySnapshot2.empty){
+        //   const matchArray2 = await Promise.all(
+        //     querySnapshot2.docs.map(async (doc) => {
+        //       const Usdata = doc.data();
+        //       const t1D = await getTeamDetails(Usdata.team1);
+        //       const t2D = await getTeamDetails(Usdata.team2);
+        //       const grounds = await getGroundDetails(Usdata.ground_id);
               
-              return {
-                dateTime: Usdata.dateTime,
-                ground_id: grounds,
-                highlights: Usdata.highlights || [],
-                match_id: Usdata.match_id,
-                result: Usdata.result,
-                team1: t1D,
-                team2: t2D,
-                umpire_id: Usdata.umpire_id,
-                ground_id2: Usdata.ground_id,
-                team1_id: Usdata.team1,
-                team2_id: Usdata.team2,
-              };
-            })
-          );
-          setMatchData([...matchData, ...matchArray2]); // Set the fetched matches
-        }
+        //       return {
+        //         dateTime: Usdata.dateTime,
+        //         ground_id: grounds,
+        //         highlights: Usdata.highlights || [],
+        //         match_id: Usdata.match_id,
+        //         result: Usdata.result,
+        //         team1: t1D,
+        //         team2: t2D,
+        //         umpire_id: Usdata.umpire_id,
+        //         ground_id2: Usdata.ground_id,
+        //         team1_id: Usdata.team1,
+        //         team2_id: Usdata.team2,
+        //       };
+        //     })
+        //   );
+        //   setMatchData([...matchData, ...matchArray2]); // Set the fetched matches
+        // }
+
+        const matchArray1 = await Promise.all(
+          querySnapshot1.docs.map(async (doc) => {
+            const Usdata = doc.data();
+            const t1D = await getTeamDetails(Usdata.team1);
+            const t2D = await getTeamDetails(Usdata.team2);
+            const grounds = await getGroundDetails(Usdata.ground_id);
+    
+            return {
+              dateTime: Usdata.dateTime,
+              ground_id: grounds,
+              highlights: Usdata.highlights || [],
+              match_id: Usdata.match_id,
+              result: Usdata.result,
+              team1: t1D,
+              team2: t2D,
+              umpire_id: Usdata.umpire_id,
+              ground_id2: Usdata.ground_id,
+              team1_id: Usdata.team1,
+              team2_id: Usdata.team2,
+            };
+          })
+        );
+    
+        // Process querySnapshot2
+        const matchArray2 = await Promise.all(
+          querySnapshot2.docs.map(async (doc) => {
+            const Usdata = doc.data();
+            const t1D = await getTeamDetails(Usdata.team1);
+            const t2D = await getTeamDetails(Usdata.team2);
+            const grounds = await getGroundDetails(Usdata.ground_id);
+    
+            return {
+              dateTime: Usdata.dateTime,
+              ground_id: grounds,
+              highlights: Usdata.highlights || [],
+              match_id: Usdata.match_id,
+              result: Usdata.result,
+              team1: t1D,
+              team2: t2D,
+              umpire_id: Usdata.umpire_id,
+              ground_id2: Usdata.ground_id,
+              team1_id: Usdata.team1,
+              team2_id: Usdata.team2,
+            };
+          })
+        );
+    
+        const combinedMatches = [...matchArray1, ...matchArray2];
+        setMatchData(combinedMatches);
         
         // querySnapshot1.forEach((doc) => {
         //   matches.push(doc.data() as Match);

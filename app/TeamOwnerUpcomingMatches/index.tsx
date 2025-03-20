@@ -1,120 +1,413 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, Button, FlatList } from 'react-native';
+import React, { useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet,
+  Image,
+  SafeAreaView, 
+  ActivityIndicator,
+  FlatList,
+  Animated 
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Import icons
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDocs, query, where, collection } from 'firebase/firestore';
+import { db } from '@/firebaseConfig'
+
+type Match={
+  dateTime: string;
+  ground_id: string;
+  highlights:[],
+  match_id: string;
+  result: string;
+  team1: string;
+  team2: string;
+  umpire_id: string;
+  ground_id2: string;
+  team1_id: string;
+  team2_id: string;
+};
+
+interface Player{
+    name: string;
+    username: string;
+    phone_no: string;
+    role: string;
+    password: string;
+    player_id: string; 
+    fitness_status: string;
+    matches_played: number;
+    best_bowling: string;
+    highlights: string[];
+    team_id: string;
+    preferred_hand: string;
+    bowling_hand: string;
+    training_sessions: string;
+    assigned_drills: string;
+    weight: number;
+    height: number;
+    age: number;
+    email: string;
+    fiveWickets: number;
+    requestAccepted: false,
+    runsScored : number;
+    ballsFaced : number;
+    battingAverage : number;
+    battingStrikeRate : number;
+    noOfTimesOut : number;
+    centuries : number;
+    halfCenturies : number;
+    oversBowled : number;
+    ballsBowled : number;
+    runsConceded : number;
+    wicketsTaken : number;
+    bowlingAverage : number;
+    economyRate : number;
+    bowlingStrikeRate : number;
+    profile_pic:string;
+    maidenOvers: number;
+}
 
 export default function UpcomingMatchesScreen() {
   const router = useRouter();
+  const [groundID, setGroundID] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [matchData, setMatchData] = useState<Match[]>([]);
+  const [teamExists, setTeamExists] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [userData,setUserData] = useState<Player>();
+  const [teamOwnerData,setTeamOwnerData] = useState({
+    teamOwner_id: "",
+    player_id: "",
+    team_id:"",
+    username:  "",
+    password: "",
+  });
+
+  useEffect(() => {
+    const fetchTeamOwnerData = async () => {
+      try {
+        setLoading(true);
+        const storedUserData = await AsyncStorage.getItem("userData");
+        if (storedUserData) {
+          const parsedUserData = JSON.parse(storedUserData);
+          console.log("FetchedTeam Owner Data:", parsedUserData); // Debugging
+          setTeamOwnerData(parsedUserData);
+          console.log("Team Owner Data:", teamOwnerData); // Debugging
+          //await fetchTeamData();
+          if (parsedUserData.team_id === '') {
+            setTeamExists(false);
+            console.log("Team does not exist");
+          }
+          //await fetchUserData();
+          // else{
+          //   console.log("Team exists");
+          //   await fetchTeamData();
+          // }
+          
+        }
+      } catch (error) {
+        console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false);
+      }
+    };
+
+    fetchTeamOwnerData();
+  }, []);
+  useEffect(() => {
+    console.log("Updated Team Owner Data (getting userdata):", teamOwnerData); // Debugging
+    fetchUserData();
+  }, [teamOwnerData]);
+
+  // useEffect(() => {
+  //   if(teamOwnerData.player_id){
+  //     fetchUserData();
+  //   }
+  // }, [teamOwnerData.player_id])
+
+    const fetchUserData = async () => {
+      try {
+        setLoading(true); // Start loading
+        console.log("Player ID:", teamOwnerData.player_id);
+        const playerID = teamOwnerData.player_id;
+        const playerCollectionRef = collection(db, "player");
+        const q = query(playerCollectionRef, where("player_id", "==", playerID));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const playerDoc = querySnapshot.docs[0];
+          const playerData = playerDoc.data();
+          console.log("Player Data:", playerData); // Debugging
+          setUserData(playerData as Player);
+          console.log("Player Data:", userData); // Debugging
+        } else {
+          console.log("Player not found in Firestore.");
+        }
+      } catch (error) {
+        console.log("Error fetching user data:", error);
+      } finally{
+        setLoading(false); // Stop loading
+      }
+    };
+
+    useEffect(() => {
+      if(teamOwnerData.team_id !== ''){
+        fetchMatchData();
+      }
+    }
+    , [userData]);
+
+    useEffect(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(fadeAnim, {
+            toValue: 1, // Fade in
+            duration: 1000, // Duration of the fade-in
+            useNativeDriver: true, // Use native driver for better performance
+          }),
+          Animated.timing(fadeAnim, {
+            toValue: 0, // Fade out
+            duration: 1000, // Duration of the fade-out
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, [fadeAnim]);
+
+const fetchMatchData = async () => {
+  setLoading(true); // Start loading
+  try {
+    const teamID = teamOwnerData.team_id;
+    const matchCollectionRef = collection(db, "match");
+    const q1 = query(matchCollectionRef, where("team1", "==", teamID),where("result", "==", "pending"));
+    const q2 = query(matchCollectionRef, where("team2", "==", teamID),where("result", "==", "pending"));
+    const [querySnapshot1, querySnapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+    //const matches: Match[] = [];
+    // if(!querySnapshot1.empty){
+    //   const matchArray1 = await Promise.all(
+    //     querySnapshot1.docs.map(async (doc) => {
+    //       const Usdata = doc.data();
+    //       const t1D = await getTeamDetails(Usdata.team1);
+    //       const t2D = await getTeamDetails(Usdata.team2);
+    //       const grounds = await getGroundDetails(Usdata.ground_id);
+          
+    //       return {
+    //         dateTime: Usdata.dateTime,
+    //         ground_id: grounds,
+    //         highlights: Usdata.highlights || [],
+    //         match_id: Usdata.match_id,
+    //         result: Usdata.result,
+    //         team1: t1D,
+    //         team2: t2D,
+    //         umpire_id: Usdata.umpire_id,
+    //         ground_id2: Usdata.ground_id,
+    //         team1_id: Usdata.team1,
+    //         team2_id: Usdata.team2,
+    //       };
+    //     })
+    //   );
+    //   setMatchData(matchArray1); // Set the fetched matches
+    // }
+    // if(!querySnapshot2.empty){
+    //   const matchArray2 = await Promise.all(
+    //     querySnapshot2.docs.map(async (doc) => {
+    //       const Usdata = doc.data();
+    //       const t1D = await getTeamDetails(Usdata.team1);
+    //       const t2D = await getTeamDetails(Usdata.team2);
+    //       const grounds = await getGroundDetails(Usdata.ground_id);
+          
+    //       return {
+    //         dateTime: Usdata.dateTime,
+    //         ground_id: grounds,
+    //         highlights: Usdata.highlights || [],
+    //         match_id: Usdata.match_id,
+    //         result: Usdata.result,
+    //         team1: t1D,
+    //         team2: t2D,
+    //         umpire_id: Usdata.umpire_id,
+    //         ground_id2: Usdata.ground_id,
+    //         team1_id: Usdata.team1,
+    //         team2_id: Usdata.team2,
+    //       };
+    //     })
+    //   );
+    //   setMatchData([...matchData, ...matchArray2]); // Set the fetched matches
+    // }
+
+    const matchArray1 = await Promise.all(
+      querySnapshot1.docs.map(async (doc) => {
+        const Usdata = doc.data();
+        const t1D = await getTeamDetails(Usdata.team1);
+        const t2D = await getTeamDetails(Usdata.team2);
+        const grounds = await getGroundDetails(Usdata.ground_id);
+
+        return {
+          dateTime: Usdata.dateTime,
+          ground_id: grounds,
+          highlights: Usdata.highlights || [],
+          match_id: Usdata.match_id,
+          result: Usdata.result,
+          team1: t1D,
+          team2: t2D,
+          umpire_id: Usdata.umpire_id,
+          ground_id2: Usdata.ground_id,
+          team1_id: Usdata.team1,
+          team2_id: Usdata.team2,
+        };
+      })
+    );
+
+    // Process querySnapshot2
+    const matchArray2 = await Promise.all(
+      querySnapshot2.docs.map(async (doc) => {
+        const Usdata = doc.data();
+        const t1D = await getTeamDetails(Usdata.team1);
+        const t2D = await getTeamDetails(Usdata.team2);
+        const grounds = await getGroundDetails(Usdata.ground_id);
+
+        return {
+          dateTime: Usdata.dateTime,
+          ground_id: grounds,
+          highlights: Usdata.highlights || [],
+          match_id: Usdata.match_id,
+          result: Usdata.result,
+          team1: t1D,
+          team2: t2D,
+          umpire_id: Usdata.umpire_id,
+          ground_id2: Usdata.ground_id,
+          team1_id: Usdata.team1,
+          team2_id: Usdata.team2,
+        };
+      })
+    );
+
+    const combinedMatches = [...matchArray1, ...matchArray2];
+    setMatchData(combinedMatches);
+
+    // querySnapshot1.forEach((doc) => {
+    //   matches.push(doc.data() as Match);
+    // });
+    // querySnapshot2.forEach((doc) => {
+    //   matches.push(doc.data() as Match);
+    // });
+    // console.log("Fetched Matches:", matches);
+    // setMatchData(matches);
+  } catch (error) {
+    console.error("Error fetching match data: ", error);
+  }
+  finally {
+    setLoading(false); // Stop loading
+  }
+};
+
+const getTeamDetails = async (team_id: string) => {
+    try {
+      const teamCollectionRef = collection(db, "team");
+      const q = query(teamCollectionRef, where("team_id", "==", team_id));
+      const querySnapshot = await getDocs(q);
   
-  // State for modal visibility and selected match data
-  const [modalVisible, setModalVisible] = useState(false);
-  const [playing11, setPlaying11] = useState<{ team1: string[], team2: string[] }>({ team1: [], team2: [] });
-  const [matchTitle, setMatchTitle] = useState<string>('');
-  const [currentTeamIndex, setCurrentTeamIndex] = useState<number>(0); // Track which team to show
-
-  // Matches data with playing 11 for both teams
-  const matches: { [key: string]: { team1: string[], team2: string[] } } = {
-    "United vs Markhors": {
-      team1: ["Player1", "Player2", "Player3", "Player4", "Player5", "Player6", "Player7", "Player8", "Player9", "Player10", "Player11"],
-      team2: ["PlayerA", "PlayerB", "PlayerC", "PlayerD", "PlayerE", "PlayerF", "PlayerG", "PlayerH", "PlayerI", "PlayerJ", "PlayerK"],
-    },
-    "United vs Qalandars": {
-      team1: ["Player12", "Player13", "Player14", "Player15", "Player16", "Player17", "Player18", "Player19", "Player20", "Player21", "Player22"],
-      team2: ["PlayerL", "PlayerM", "PlayerN", "PlayerO", "PlayerP", "PlayerQ", "PlayerR", "PlayerS", "PlayerT", "PlayerU", "PlayerV"],
-    },
-  };
-
-  // Function to handle when a match container is clicked
-  const handleMatchPress = (matchTitle: string) => {
-    const selectedMatch = matches[matchTitle]; // Fetch the match data using the title
-    if (selectedMatch) {
-      setPlaying11(selectedMatch); // Set playing 11 for both teams
-      setMatchTitle(matchTitle); // Set match title
-      setModalVisible(true); // Open the modal
+      if (!querySnapshot.empty) {
+        const teamDoc = querySnapshot.docs[0];
+        const teamData = teamDoc.data();
+        return teamData.team_name;
+      } else {
+        // setAlertMessage("Team not found in Firestore.");
+        // setAlertVisible(true);
+        return "";
+      }
+    } catch (error) {
+      console.error("Error fetching team details: ", error);
+      // setAlertMessage("Failed to fetch team details");
+      // setAlertVisible(true);
+      return "";
     }
   };
 
-  // Function to render the playing XI for each team
-  const renderPlaying11 = ({ item }: { item: { team: string[]; title: string } }) => (
-    <View style={styles.teamContainer}>
-      <Text style={styles.teamTitle}>{item.title}</Text>
-      {item.team.map((player, index) => (
-        <Text key={index} style={styles.playerName}>{player}</Text>
-      ))}
-    </View>
-  );
+  const getGroundDetails = async (ground_id: string) => {
+    try {
+      const teamCollectionRef = collection(db, "ground");
+      const q = query(teamCollectionRef, where("ground_id", "==", ground_id));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const teamDoc = querySnapshot.docs[0];
+        const teamData = teamDoc.data();
+        return teamData.name;
+      } else {
+        // setAlertMessage("Ground not found in Firestore.");
+        // setAlertVisible(true);
+        return "";
+      }
+    } catch (error) {
+      console.error("Error fetching team details: ", error);
+      // setAlertMessage("Failed to fetch team details");
+      // setAlertVisible(true);
+      return "";
+    }
+  };
 
-  // Data for the FlatList showing each team's playing XI
-  const teamData = [
-    { team: playing11.team1, title: "Team 1" },
-    { team: playing11.team2, title: "Team 2" },
-  ];
+  const renderMatchItem = ({ item }: { item: Match }) => {
+    if (!item) return null;
+  
+    return (
+      <TouchableOpacity 
+        onPress={() => router.push({ pathname: '/MatchDetails', params: { matchData: JSON.stringify(item) } })} 
+        style={styles.matchContainer}
+      >
+        <Animated.View 
+          style={[
+            styles.matchCard, 
+            {
+              borderColor: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['#1e1e1e', '#005B41'], // Change colors as needed
+              }),
+              shadowOpacity: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.3, 0.7], // Adjust shadow opacity
+              }),
+            }
+          ]}
+        >
+          <View style={styles.matchDetails}>
+            <Text style={styles.matchTitle}>{item.team1} vs {item.team2}</Text>
+            <Text style={styles.matchInfo}>Date: {item.dateTime}</Text>
+            <Text style={styles.matchInfo}>Location: Ground {item.ground_id}</Text>
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#005B41" />
+        <Text style={styles.logo}>Loading Matches...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Back Button */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/TeamOwnerHomeScreen')}>
-          <Icon name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Upcoming Matches</Text>
-      </View>
-
-      {/* Ongoing Match Container */}
-      <View style={styles.matchContainer}>
-        <Text style={styles.matchTitle}>United:</Text>
-        <Text style={styles.matchDetail2}>20/1 (4/20)</Text>
-        <Text style={styles.matchTitle2}>vs</Text>
-        <Text style={styles.matchTitle2}>Kings</Text>
-        <Text style={styles.matchDetail}>Venue: Pasban Cricket Complex</Text>
-      </View>
-
-      {/* Match Container 1 - Clickable for modal */}
-      <TouchableOpacity style={styles.matchContainer} onPress={() => handleMatchPress("United vs Markhors")}>
-        <Text style={styles.matchTitle}>United vs Markhors</Text>
-        <Text style={styles.matchDetail}>Date: 25th September, 2024</Text>
-        <Text style={styles.matchDetail}>Time: 11:00 AM</Text>
-        <Text style={styles.matchDetail}>Venue: Pasban Cricket Complex</Text>
-      </TouchableOpacity>
-
-      {/* Match Container 2 - Clickable for modal */}
-      <TouchableOpacity style={styles.matchContainer} onPress={() => handleMatchPress("United vs Qalandars")}>
-        <Text style={styles.matchTitle}>United vs Qalandars</Text>
-        <Text style={styles.matchDetail}>Date: 26th September, 2024</Text>
-        <Text style={styles.matchDetail}>Time: 7:00 AM</Text>
-        <Text style={styles.matchDetail}>Venue: E9 Cricket Ground</Text>
-      </TouchableOpacity>
-
-      {/* Modal to display playing 11 */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Playing 11 for {matchTitle}</Text>
-            <FlatList
-              data={teamData}
-              horizontal
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={renderPlaying11}
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={(event) => {
-                const index = Math.floor(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);
-                setCurrentTeamIndex(index);
-              }}
-              style={styles.flatList}
-            />
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-  <Text style={styles.closeButtonText}>Close</Text>
-</TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+    <SafeAreaView style={styles.container}>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/TeamOwnerHomeScreen')}>
+            <Image source={require('@/assets/images/back.png')} style={styles.navIcon} />
+          </TouchableOpacity>
+    
+          <Text style={styles.title}>Upcoming Matches</Text>
+    
+          <FlatList
+            data={matchData}
+            renderItem={renderMatchItem}
+            keyExtractor={(item) => item.match_id}
+            ListEmptyComponent={<Text style={styles.noMatchesText}>No matches available.</Text>}
+            onEndReachedThreshold={0.5} // To handle large datasets if needed
+          />
+    
+        </SafeAreaView>
   );
 }
 
@@ -125,12 +418,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 30,
   },
-  header: {
-    flexDirection: 'row',
+  logo: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  loaderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '', // Semi-transparent background
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    zIndex:1000,
+  },
+  matchContainer: {
+    backgroundColor: '#1e1e1e',
+    padding: 15,
+    marginVertical: 10,
+    marginHorizontal: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  matchCard: {
+    backgroundColor: '#1e1e1e',
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 2, // Add border width
+    shadowColor: '#005B41', // Shadow color
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  matchDetails: {
+    marginBottom: 10,
+    color:'white',
+  },
+  matchTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color:'white',
+  },
+  matchInfo: {
+    fontSize: 14,
+    color: 'lightgrey',
+  },
+  noMatchesText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#888',
     marginTop: 20,
-    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -139,89 +479,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     marginTop: 15,
-    marginRight: 23,
   },
-  matchContainer: {
-    backgroundColor: '#1e1e1e',
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  matchTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff', // Light text color for dark mode
-    marginBottom: 0,
-  },
-  flatList: { // Add this style
-    height: 250, // Adjust the height as needed
-  },
-  matchTitle2: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff', // Light text color for dark mode
-    marginBottom: 2,
-    bottom: 30,
-  },
+
   matchDetail: {
     fontSize: 16,
-    color: '#bbb', // Softer color for the detail text
+    color: '#bbb',  // Softer color for the detail text
     marginBottom: 5,
   },
-  matchDetail2: {
-    fontSize: 16,
-    marginLeft: 210,
-    bottom: 27,
-    color: '#bbb', // Softer color for the detail text
-    marginBottom: 5,
+  backButton: {
+    position: 'absolute',
+    left: 1,
+    padding: 10,
+    marginTop: 15,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent background
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#121212',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color:'white',
-  },
-  teamContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  teamTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 10,
-    color:'white',
-  },
-  playerName: {
-    fontSize: 16,
-    color: 'grey',
-    marginBottom: 5,
-
-  },
-  closeButton: {
-    backgroundColor: "#005B41", // Teal color for the button
-    padding: 15,
-    borderRadius: 20, // Rounded buttons for aesthetic appeal
-    alignItems: "center",
-    marginBottom: 10,
-    marginTop:15,
-  },
-  closeButtonText: {
-    fontSize: 18,
-    color: "#fff",
-    fontWeight: "bold",
+  navIcon: {
+    width: 25, // Icon size
+    height: 25,
+    tintColor: '#fff', // Light icon color
   },
 });

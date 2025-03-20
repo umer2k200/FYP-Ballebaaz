@@ -5,8 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from '@/firebaseConfig'; // Adjust the import according to your structure
 import { collection, getDocs, addDoc, query, where, updateDoc, arrayUnion } from 'firebase/firestore'; // Added 'addDoc'
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CustomAlert from '@/components/CustomAlert';
-
+import { Picker } from '@react-native-picker/picker';
 
 // Define the Ground interface
 interface Ground {
@@ -15,6 +14,25 @@ interface Ground {
   location: string;  // New field for location
   revenue: string;   // New field for revenue
   picture: any; // Use 'any' for local images
+}
+
+interface Team {
+  id: string,
+  captain_id: string,
+  captain_name: string,
+  coach_id: string,
+  highest_score: string,
+  highlights: string[],
+  kit_pic: string,
+  matches_lost : number,
+  matches_played: number,
+  matches_won: number,
+  players: string[],
+  profile_pic: string,
+  ranking: number,
+  team_id: string,
+  team_name: string,
+  wl_ratio: string,
 }
 
 export default function GroundBooking() {
@@ -36,6 +54,8 @@ export default function GroundBooking() {
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [teamsData, setTeamsData] = useState<Team[]>([]);
+  const [selectedTeamPlayers, setSelectedTeamPlayers] = useState<Number>(0);
 
   const handleAlertConfirm = () => {
     setAlertVisible(false);
@@ -50,15 +70,6 @@ export default function GroundBooking() {
     password: "",
 
   })
-
-  const [userData, setUserData] = useState({
-    username: "",
-    phone_no: 0,
-    email: "",
-    team_id: "",
-    teamOwner_id: "",
-  });
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -66,9 +77,9 @@ export default function GroundBooking() {
         const storedUserData = await AsyncStorage.getItem("userData");
         if (storedUserData) {
           const parsedUserData = JSON.parse(storedUserData);
-          setUserData(parsedUserData);
+          setTeamOwnerData(parsedUserData);
+          setTeamId(parsedUserData.team_id);
           setUsername(parsedUserData.username);
-          setPhoneNumber(parsedUserData.phone_no.toString());
           setTeamOwnerId(parsedUserData.teamOwner_id);
         }
       } catch (error) {
@@ -80,6 +91,28 @@ export default function GroundBooking() {
 
     fetchUserData();
   }, []);
+
+  
+  const fetchTeams = async () => {
+      try{
+        const teamCollectionRef = collection(db, 'team');
+        const fetchteams  = await getDocs(teamCollectionRef);
+        const fetchedTeams: Team[] = fetchteams.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Team[];
+        const filteredTeams = fetchedTeams.filter(team => team.team_id !== teamOwnerData.team_id);
+        setTeamsData(filteredTeams);
+        console.log("Teams fetched successfully: ", fetchedTeams);
+      }
+      catch(error){
+        console.error("Error fetching teams:", error);
+      }
+  }; 
+
+  useEffect(() => {
+    fetchTeams();
+  }, [teamOwnerData.team_id]);
 
 
   // Fetch ground data on component mount
@@ -132,7 +165,7 @@ export default function GroundBooking() {
           price: selectedGroundPrice,
           team1: TeamId,
           team2: secondTeamId,
-          teamOwner_id: userData.teamOwner_id,
+          teamOwner_id: teamOwnerData.teamOwner_id,
           umpire_id: "",
         });
         console.log(`Booking created with ID: ${bookingRef.id}`);
@@ -167,6 +200,14 @@ export default function GroundBooking() {
     } else {
       setAlertMessage('Please fill in all the details.');
       setAlertVisible(true);
+    }
+  };
+
+  const handleTeamSelection = (teamId: string) => {
+    setSecondTeamId(teamId);
+    const selectedTeam = teamsData.find((team) => team.team_id === teamId);
+    if (selectedTeam) {
+      setSelectedTeamPlayers(selectedTeam.players.length); // Update the number of players
     }
   };
 
@@ -234,20 +275,35 @@ export default function GroundBooking() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Book Ground</Text>
-              <TextInput
+              
+              {/* <TextInput
                 style={styles.input}
                 placeholder="Team ID"
                 placeholderTextColor="lightgrey"
                 value={TeamId}
                 onChangeText={setTeamId}
-              />
-              <TextInput
+              /> */}
+              <Picker
+                selectedValue={TeamId}
+                onValueChange={(itemValue) => handleTeamSelection(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select Other Team" value="" />
+                {teamsData.map((team) => (
+                  <Picker.Item
+                    key={team.team_id}
+                    label={`${team.team_name}: (${team.players.length} ${team.players.length > 1 ? 'players' : 'player'})`}
+                    value={team.team_id}
+                  />
+                ))}
+              </Picker>
+              {/* <TextInput
                 style={styles.input}
                 placeholder="Second Team ID"
                 placeholderTextColor="lightgrey"
                 value={secondTeamId}
                 onChangeText={setSecondTeamId}
-              />
+              /> */}
               <TextInput
                 style={styles.input}
                 placeholder="Date and Time"
@@ -276,6 +332,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#121212',
+  },
+  picker: {
+    height: 70,
+    width: '100%',
+    color: 'white',
+    backgroundColor: '#1e1e1e',
+    marginBottom: 10,
   },
   loaderContainer: {
     ...StyleSheet.absoluteFillObject,

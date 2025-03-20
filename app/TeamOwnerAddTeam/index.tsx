@@ -66,6 +66,7 @@ export default function AddTeamScreen() {
     team_id: "T" + Math.floor(Math.random() * 1000),
     team_name: teamName,
     wl_ratio: "",
+    kit_pic: "",
   };
 
   useEffect(() => {

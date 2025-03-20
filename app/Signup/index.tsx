@@ -428,7 +428,7 @@ export default function Signup() {
       }
       const umpireData = {
         umpire_id:random_umpireID ,
-        umpire_name: fullName,
+        name: fullName,
         username: username,
         email: "",
         matches_officiated: [],

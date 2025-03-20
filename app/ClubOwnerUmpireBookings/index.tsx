@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { db } from "@/firebaseConfig";
@@ -18,13 +17,14 @@ import {
   getDocs,
   collection,
   query,
-  getDoc,
   where,
   updateDoc,
-  Timestamp,
   addDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import CustomAlert from "@/components/CustomAlert";
+import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Umpire {
   umpire_id: string;
@@ -34,24 +34,36 @@ interface Umpire {
   phone_no: string;
   experience: string;
   password: string;
-  mathes_officiated: string[];
+  matches_officiated: string[];
 }
 
+interface booking{
+  booking_id: string;
+  dateTime: string;
+  ground_id: string;
+  team1: string;
+  team2: string;
+  payment_status: string;
+  umpire_id: string;
+  teamOwner_id: string;
+  price: number;
+}
 
 export default function ClubOwnerUmpireBookings() {
   const router = useRouter();
   const [umpiresList, setUmpiresList] = useState<Umpire[]>([]); // Store fetched umpire details here
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
   const [selectedUmpire, setSelectedUmpire] = useState<Umpire | null>(null); // Selected umpire details
-  
+  const [bookingsData, setBookingsData] = useState<booking[]>([]);
   const [bookingId, setBookingId] = useState("");
   const [loading, setLoading] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+
   const handleAlertConfirm = () => {
     setAlertVisible(false);
   };
-
+ 
   const [umpireData, setUmpireData] = useState({
     umpire_id: "",
     name: "",
@@ -59,7 +71,7 @@ export default function ClubOwnerUmpireBookings() {
     email: "",
     phone_no: 0,
     password: "",
-    mathes_officiated: [] as string[],
+    matches_officiated: [] as string[],
   });
   const [bookingData, setBookingData] = useState({
     booking_id: "",
@@ -72,6 +84,34 @@ export default function ClubOwnerUmpireBookings() {
     teamOwner_id: "",
     price: 0,
   });
+  const [clubOwnerData, setclubOwnerData] = useState({
+      clubOwner_id: "",
+      clubOwner_name: "",
+      username: "",
+      email: "",
+      ground_id: "",
+      revenue: 0,
+      bookings: [],
+      phone_no: 0,
+      password: "",
+    });
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+          try {
+            const storedUserData = await AsyncStorage.getItem("userData");
+            if (storedUserData) {
+              const parsedUserData = JSON.parse(storedUserData);
+              console.log("Fetched User Data:", parsedUserData); // Debugging
+              setclubOwnerData(parsedUserData);
+            }
+          } catch (error) {
+            console.log("Error fetching user data:", error);
+          }
+        };
+    
+        fetchUserData();
+      }, []);
 
   const fetchUmpires = async () => {
     try {
@@ -101,6 +141,29 @@ export default function ClubOwnerUmpireBookings() {
     fetchUmpires();
   }, []);
 
+  const fetchBookings = async () => {
+        try{
+          const teamCollectionRef = collection(db, 'booking');
+          const q = query(teamCollectionRef, where('umpire_id', '==', ""),where('ground_id','==',clubOwnerData.ground_id));
+          const querySnapshot = await getDocs(q);
+          // const fetchteams  = await getDocs(teamCollectionRef);
+          const fetchedTeams: booking[] = querySnapshot.docs.map(doc => ({
+            
+            ...doc.data(),
+          })) as booking[];
+          setBookingsData(fetchedTeams);
+          console.log("Teams fetched successfully: ", fetchedTeams);
+        }
+        catch(error){
+          console.error("Error fetching teams:", error);
+        }
+    }; 
+  
+    useEffect(() => {
+      fetchBookings();
+    }, [clubOwnerData.ground_id]);
+  
+
   const handleSelectUmpire = (umpire: Umpire) => {
     setSelectedUmpire(umpire);
     setModalVisible(true);
@@ -124,6 +187,26 @@ export default function ClubOwnerUmpireBookings() {
         await updateDoc(bookingDocRef, {
           umpire_id: selectedUmpire.umpire_id,
         });
+
+        //update the same in async storage
+        const storedUserData = await AsyncStorage.getItem("userData");
+        if (storedUserData) {
+          const parsedUserData = JSON.parse(storedUserData);
+          console.log("Fetched User Data:", parsedUserData); // Debugging
+          const updatedUserData = {
+            ...parsedUserData,
+            bookings: parsedUserData.bookings.map((booking: any) => {
+              if (booking.booking_id === bookingId) {
+                return {
+                  ...booking,
+                  umpire_id: selectedUmpire.umpire_id,
+                };
+              }
+              return booking;
+            }),
+          };
+          await AsyncStorage.setItem("userData", JSON.stringify(updatedUserData));
+        }
         
 
         console.log(`Booking Umpire ID: ${selectedUmpire.umpire_id} with Booking ID: ${bookingId}`);
@@ -154,7 +237,7 @@ export default function ClubOwnerUmpireBookings() {
           const umpireDocId = umpireDoc.id;
           const umpireDocRef = doc(db, "umpire", umpireDocId);
           await updateDoc(umpireDocRef, {
-            mathes_officiated: [...umpireData.mathes_officiated, matchData1.match_id],
+            matches_officiated: arrayUnion(matchData1.match_id),
           });
         }
 
@@ -251,13 +334,31 @@ export default function ClubOwnerUmpireBookings() {
               </Text>
 
               {/* Input for Booking ID */}
-              <TextInput
+              {/* <TextInput
                 placeholder="Enter Booking ID"
                 value={bookingId}
                 onChangeText={setBookingId}
                 style={styles.input}
                 placeholderTextColor="#999"
-              />
+              /> */}
+              <Picker
+                selectedValue={bookingId}
+                onValueChange={(itemValue, itemIndex) => setBookingId(itemValue)}
+                style={styles.input2}
+              >
+                <Picker.Item label="Select Booking ID" value="" />
+                {bookingsData.length > 0 ? (
+                  bookingsData.map((booking) => (
+                    <Picker.Item
+                      key={booking.booking_id}
+                      label={booking.booking_id}
+                      value={booking.booking_id}
+                    />
+                  ))
+                ) : (
+                  <Picker.Item label="No bookings available" value="" enabled={false} />
+                )}
+              </Picker>
 
               <TouchableOpacity
                 style={styles.viewAllButton}
@@ -388,6 +489,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     borderRadius: 5,
     marginBottom: 20,
+    width: "95%",
+  },
+  input2: {
+    backgroundColor: "#333",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    color: "#fff",
+    borderRadius: 5,
+    marginBottom: 0,
     width: "95%",
   },
   coachText: {

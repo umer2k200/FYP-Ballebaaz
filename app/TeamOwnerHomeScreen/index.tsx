@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from '@/firebaseConfig';
-import CustomAlert from '@/components/CustomAlert';
 import {
   View,
   Text,
@@ -210,10 +209,15 @@ export default function TeamOwnerProfileScreen() {
             <Text style={styles.statValue}>{teamData.captain_name}</Text>
           </View>
         </View>
+        {teamExists? (<>
         {/* Upcoming Matches Button */}
-      <TouchableOpacity style={styles.matchesButton} onPress={() => router.push('/TeamOwnerUpcomingMatches')}>
+      <TouchableOpacity 
+        style={styles.matchesButton} 
+        onPress={() => router.push('/TeamOwnerUpcomingMatches')}
+      >
         <Text style={styles.matchesButtonText}>Upcoming Matches</Text>
       </TouchableOpacity>
+      </>):(<></>)}
         </>):(
           <TouchableOpacity
           style={styles.addGroundButton}

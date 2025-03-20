@@ -260,9 +260,7 @@ const MatchDetailsScreen = () => {
       </View>
 
       {/* Floating Button for Joining the Match */}
-      <TouchableOpacity style={styles.joinButton}>
-        <Text style={styles.joinButtonText}>Join Match</Text>
-      </TouchableOpacity>
+      
     </View>
   );
 };
