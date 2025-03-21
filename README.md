@@ -42,7 +42,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install @react-navigation/native
    npm install openai buffer fs
    npm install date-fns
-
+   npm install expo-document-picker
    ```
 
 2. Start the app
